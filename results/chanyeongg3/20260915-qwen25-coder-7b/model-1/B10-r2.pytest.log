@@ -1,0 +1,55 @@
+FFF..F...F
+================================== FAILURES ===================================
+_________________________________ test_normal _________________________________
+test_public.py:7: in test_normal
+    assert stock == {"a": 3}
+E   AssertionError: assert {'a': 5} == {'a': 3}
+E     
+E     Differing items:
+E     {'a': 5} != {'a': 3}
+E     Use -v to get more diff
+_________________________ test_multiple_and_unrelated _________________________
+test_public.py:15: in test_multiple_and_unrelated
+    assert stock == {"a": 3, "b": 2, "c": 8}
+E   AssertionError: assert {'a': 5, 'b': 3, 'c': 8} == {'a': 3, 'b': 2, 'c': 8}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'a': 5} != {'a': 3}
+E     {'b': 3} != {'b': 2}
+E     Use -v to get more diff
+______________________________ test_exact_stock _______________________________
+test_public.py:22: in test_exact_stock
+    assert stock == {"": 0}
+E   AssertionError: assert {'': 2} == {'': 0}
+E     
+E     Differing items:
+E     {'': 2} != {'': 0}
+E     Use -v to get more diff
+__________________________ test_failure_then_success __________________________
+test_hidden.py:36: in test_failure_then_success
+    assert stock == {"a": 1, "b": 5}
+E   AssertionError: assert {'a': 4, 'b': 5} == {'a': 1, 'b': 5}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'a': 4} != {'a': 1}
+E     Use -v to get more diff
+_____________________ test_copies_and_sequential_success ______________________
+test_hidden.py:80: in test_copies_and_sequential_success
+    assert stock == {"a": 1, "b": 5}
+E   AssertionError: assert {'a': 4, 'b': 5} == {'a': 1, 'b': 5}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'a': 4} != {'a': 1}
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED test_public.py::test_normal - AssertionError: assert {'a': 5} == {'a': 3}
+FAILED test_public.py::test_multiple_and_unrelated - AssertionError: assert {...
+FAILED test_public.py::test_exact_stock - AssertionError: assert {'': 2} == {...
+FAILED test_hidden.py::test_failure_then_success - AssertionError: assert {'a...
+FAILED test_hidden.py::test_copies_and_sequential_success - AssertionError: a...
+5 failed, 5 passed in 0.04s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_normal", "outcome": "failed"}, {"nodeid": "test_public.py::test_multiple_and_unrelated", "outcome": "failed"}, {"nodeid": "test_public.py::test_exact_stock", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_after_stock_rollback", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_after_order_rollback", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_failure_then_success", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_shortage_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_missing_sku_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_duplicate_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_copies_and_sequential_success", "outcome": "failed"}], "version": 1}

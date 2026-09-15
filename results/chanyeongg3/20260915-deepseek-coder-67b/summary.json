@@ -1,0 +1,88 @@
+{
+  "deepseek-coder:6.7b-instruct": {
+    "planned": 20,
+    "completed": 20,
+    "n": 20,
+    "solved": 2,
+    "solved_denominator": 20,
+    "all_repeats_solved_cases": 1,
+    "case_denominator": 10,
+    "call_failures": 0,
+    "statuses": {
+      "test_failure": 18,
+      "solved": 2
+    },
+    "speed_n": 20,
+    "mean_tokens_per_second": 28.213639670327012,
+    "total_call_elapsed_seconds": 154.20200000004843,
+    "call_successes": 20,
+    "call_attempts": 20,
+    "not_run": 0,
+    "successful_response_quality_denominator": 20,
+    "mean_metrics": {
+      "elapsed_seconds": {
+        "mean": 7.710100000002422,
+        "n": 20
+      },
+      "load_duration_seconds": {
+        "mean": 0.001818005,
+        "n": 20
+      },
+      "tokens_per_second": {
+        "mean": 28.213639670327012,
+        "n": 20
+      },
+      "vram_mib": {
+        "mean": 5942.629999160767,
+        "n": 20
+      }
+    },
+    "per_case": {
+      "B01": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B02": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B03": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B04": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B05": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B06": [
+        "solved",
+        "solved"
+      ],
+      "B07": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B08": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B09": [
+        "test_failure",
+        "test_failure"
+      ],
+      "B10": [
+        "test_failure",
+        "test_failure"
+      ]
+    },
+    "infra_errors": 0,
+    "missing_responses": 0,
+    "run_status": "completed",
+    "complete": true,
+    "valid_for_comparison": true
+  }
+}

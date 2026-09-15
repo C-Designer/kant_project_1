@@ -1,0 +1,22 @@
+.......FF.
+================================== FAILURES ===================================
+_____________________ test_return_values_are_independent ______________________
+test_hidden.py:39: in test_return_values_are_independent
+    assert third == {"total": 4}
+E   AssertionError: assert {} == {'total': 4}
+E     
+E     Right contains 1 more item:
+E     {'total': 4}
+E     Use -v to get more diff
+__________________ test_key_spelling_and_instance_isolation ___________________
+test_hidden.py:46: in test_key_spelling_and_instance_isolation
+    assert one.execute("key", {"x": 2}) == {"total": 2}
+solution.py:9: in execute
+    raise ValueError("idempotency key reused with different payload")
+E   ValueError: idempotency key reused with different payload
+=========================== short test summary info ===========================
+FAILED test_hidden.py::test_return_values_are_independent - AssertionError: a...
+FAILED test_hidden.py::test_key_spelling_and_instance_isolation - ValueError:...
+2 failed, 8 passed in 0.03s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_first_request", "outcome": "passed"}, {"nodeid": "test_public.py::test_identical_retry", "outcome": "passed"}, {"nodeid": "test_public.py::test_distinct_keys", "outcome": "passed"}, {"nodeid": "test_public.py::test_changed_payload_conflict", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_same_total_different_payload_conflicts_and_preserves_state", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_dict_order_does_not_matter", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_input_snapshot_and_no_input_mutation", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_return_values_are_independent", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_key_spelling_and_instance_isolation", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_empty_and_negative_payloads", "outcome": "passed"}], "version": 1}

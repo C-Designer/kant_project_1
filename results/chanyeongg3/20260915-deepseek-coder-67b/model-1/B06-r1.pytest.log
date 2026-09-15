@@ -1,0 +1,4 @@
+..........
+10 passed in 0.01s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 0, "tests": [{"nodeid": "test_public.py::test_single", "outcome": "passed"}, {"nodeid": "test_public.py::test_repeat", "outcome": "passed"}, {"nodeid": "test_public.py::test_empty_profile", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_interleaved", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_reverse", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_exact_ids", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_return_copy", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_snapshot", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_missing", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_instances", "outcome": "passed"}], "version": 1}
