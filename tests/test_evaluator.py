@@ -12,6 +12,11 @@ from harness import evaluator
 from harness.evaluator import PREFIX, evaluate, parse_report, python_preflight
 
 
+def is_runner_command(command):
+    """Windows _kill_tree spawns taskkill.exe through the same patched Popen."""
+    return command[0] == sys.executable
+
+
 def report(exit_code=0, public='passed', hidden='passed'):
     return PREFIX + json.dumps({'version': 1, 'exit_code': exit_code, 'collection_errors': [],
         'tests': [{'nodeid': 'test_public.py::test_one', 'outcome': public},
@@ -52,7 +57,7 @@ def test_report_integrity(mutation):
 def small_case(tmp_path):
     for filename, arg, expected in [('test_public.py', 2, 3), ('test_hidden.py', -4, -3)]:
         (tmp_path / filename).write_text(
-            f'from solution import increment\ndef test_increment(): assert increment({arg}) == {expected}\n')
+            f'from solution import increment\ndef test_increment(): assert increment({arg}) == {expected}\n', encoding='utf-8')
     return tmp_path
 
 
@@ -119,11 +124,13 @@ def test_command_environment_and_only_copied_inputs(monkeypatch, small_case):
     for name in ('OPENAI_API_KEY', 'AWS_SECRET_ACCESS_KEY', 'PYTHONPATH', 'PYTEST_ADDOPTS',
                  'PYTEST_PLUGINS', 'HTTP_PROXY', 'HOME', 'PATH'):
         monkeypatch.setenv(name, 'must-not-leak')
-    (small_case / 'conftest.py').write_text('raise RuntimeError("must not be copied")')
-    (small_case / 'reference.py').write_text('raise RuntimeError("must not be copied")')
+    (small_case / 'conftest.py').write_text('raise RuntimeError("must not be copied")', encoding='utf-8')
+    (small_case / 'reference.py').write_text('raise RuntimeError("must not be copied")', encoding='utf-8')
     actual = evaluator.subprocess.Popen
     workdirs = []
     def popen(command, **kwargs):
+        if not is_runner_command(command):
+            return actual(command, **kwargs)
         assert command == [sys.executable, '-I', '-B', str(evaluator.RUNNER)]
         assert not kwargs.get('shell', False)
         env = kwargs['env']
@@ -151,7 +158,8 @@ def test_actual_timeout_captured_and_cleaned(monkeypatch, small_case):
     actual = evaluator.subprocess.Popen
     workdirs = []
     def popen(command, **kwargs):
-        workdirs.append(Path(kwargs['cwd']))
+        if is_runner_command(command):
+            workdirs.append(Path(kwargs['cwd']))
         return actual(command, **kwargs)
     monkeypatch.setattr(evaluator.subprocess, 'Popen', popen)
     log = small_case / 'timeout.log'
@@ -161,7 +169,7 @@ def test_actual_timeout_captured_and_cleaned(monkeypatch, small_case):
     assert result['status'] == 'timeout', result
     assert result['process_exit_code'] is not None
     assert time.monotonic() - started < 5
-    assert 'authored timeout marker' in log.read_text()
+    assert 'authored timeout marker' in log.read_text(encoding='utf-8')
     assert all(not work.exists() for work in workdirs)
 
 
@@ -187,7 +195,7 @@ def test_output_is_bounded(small_case):
                       small_case, log_path=log)
     assert result['status'] == 'solved', result
     assert log.stat().st_size <= evaluator.OUTPUT_LIMIT
-    assert log.read_text().rstrip().splitlines()[-1].startswith(PREFIX)
+    assert log.read_text(encoding='utf-8').rstrip().splitlines()[-1].startswith(PREFIX)
 
 
 def test_launch_failure_is_evaluator_error(monkeypatch, small_case):

@@ -28,7 +28,7 @@ def test_prompt_has_no_private_inputs(tmp_path):
     directory = tmp_path / 'B01'
     directory.mkdir()
     for name in ('prompt.md', 'starter.py', 'test_public.py'):
-        (directory / name).write_text(name + ' visible')
+        (directory / name).write_text(name + ' visible', encoding='utf-8')
     # Missing private files must not prevent building a prompt.
     text = build_prompt(tmp_path, 'B01')
     assert 'test_public.py visible' in text
@@ -73,7 +73,7 @@ def test_atomic_write(tmp_path):
     dest = tmp_path / 'nested' / 'raw.json'
     atomic_write(dest, '{"x":1}')
     atomic_write(dest, '{"x":2}')
-    assert json.loads(dest.read_text()) == {'x': 2}
+    assert json.loads(dest.read_text(encoding='utf-8')) == {'x': 2}
     assert list(dest.parent.iterdir()) == [dest]
 
 

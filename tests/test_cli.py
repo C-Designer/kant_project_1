@@ -30,9 +30,9 @@ def make_cases(root):
         directory = root / case
         directory.mkdir(parents=True)
         for filename in ('prompt.md', 'starter.py', 'test_public.py'):
-            (directory / filename).write_text('visible ' + filename)
-        (directory / 'reference.py').write_text('REFERENCE_SECRET')
-        (directory / 'test_hidden.py').write_text('HIDDEN_SECRET')
+            (directory / filename).write_text('visible ' + filename, encoding='utf-8')
+        (directory / 'reference.py').write_text('REFERENCE_SECRET', encoding='utf-8')
+        (directory / 'test_hidden.py').write_text('HIDDEN_SECRET', encoding='utf-8')
 
 
 def test_cloud_export_import_missing(tmp_path):
@@ -40,12 +40,12 @@ def test_cloud_export_import_missing(tmp_path):
     make_cases(cases)
     responses.mkdir()
     assert main(['export-cloud', '--cases', str(cases), '--out', str(bundle)]) == 0
-    assert len((bundle / 'requests.jsonl').read_text().splitlines()) == 5
-    assert not any('HIDDEN_SECRET' in p.read_text() or 'REFERENCE_SECRET' in p.read_text()
+    assert len((bundle / 'requests.jsonl').read_text(encoding='utf-8').splitlines()) == 5
+    assert not any('HIDDEN_SECRET' in p.read_text(encoding='utf-8') or 'REFERENCE_SECRET' in p.read_text(encoding='utf-8')
                    for p in bundle.iterdir())
     assert main(['import-cloud', '--cases', str(cases), '--bundle', str(bundle), '--responses',
                  str(responses), '--model', 'provider/model', '--out', str(output)]) == 0
-    summary = json.loads((output / 'summary.json').read_text())['provider/model']
+    summary = json.loads((output / 'summary.json').read_text(encoding='utf-8'))['provider/model']
     assert summary['planned'] == summary['completed'] == 5
     assert summary['statuses'] == {'missing_response': 5}
     assert summary['solved'] == 0
@@ -54,9 +54,9 @@ def test_cloud_export_import_missing(tmp_path):
 
 def test_extract_cli_never_executes(tmp_path):
     source, dest = tmp_path / 'raw.txt', tmp_path / 'solution.py'
-    source.write_text('```python\nraise RuntimeError("not executed")\n```')
+    source.write_text('```python\nraise RuntimeError("not executed")\n```', encoding='utf-8')
     assert main(['extract', str(source), '--out', str(dest)]) == 0
-    assert dest.read_text().startswith('raise RuntimeError')
+    assert dest.read_text(encoding='utf-8').startswith('raise RuntimeError')
     assert main(['extract', str(source), '--out', str(dest)]) == 2
 
 
@@ -71,7 +71,7 @@ def test_cloud_import_rejects_other_repeat_counts(tmp_path, repeats, capsys):
     bundle = tmp_path / 'bundle'
     bundle.mkdir()
     (bundle / 'bundle.json').write_text(json.dumps({
-        'schema_version': 1, 'cases': list(CLOUD_IDS), 'repeats': repeats}))
+        'schema_version': 1, 'cases': list(CLOUD_IDS), 'repeats': repeats}), encoding='utf-8')
     output = tmp_path / 'run'
     assert main(['import-cloud', '--bundle', str(bundle), '--responses', str(tmp_path / 'responses'),
                  '--model', 'cloud/version', '--out', str(output)]) == 2
@@ -124,7 +124,7 @@ def test_run_records_preflight_metadata_and_timeout(monkeypatch, tmp_path):
     make_cases(cases)
     assert main(['run', '--models', 'a:1', 'b:1', '--cases', str(cases), '--out', str(output),
                  '--wall-timeout', '2.5']) == 0
-    manifest = json.loads((output / 'manifest.json').read_text())
+    manifest = json.loads((output / 'manifest.json').read_text(encoding='utf-8'))
     assert manifest['evaluator']['backend'] == 'python-subprocess'
     assert manifest['evaluator']['python_version'] == '3.12.test'
     assert manifest['evaluator']['pytest_version'] == '8.test'
@@ -180,7 +180,7 @@ def test_individual_twenty_warmup_unload_metadata(tmp_path, local_mocks):
                                       '--license-url', 'https://example.com/license']
     assert main(args) == 0
     out = tmp_path / 'results/student-1/experiment_1'
-    manifest = json.loads((out / 'manifest.json').read_text())
+    manifest = json.loads((out / 'manifest.json').read_text(encoding='utf-8'))
     assert manifest['participant'] == 'student-1'
     assert manifest['device_label'] == 'My device'
     assert manifest['model_card_url'] == 'https://example.com/card'
@@ -198,7 +198,7 @@ def test_individual_twenty_warmup_unload_metadata(tmp_path, local_mocks):
                for e in local_mocks['evaluations'])
     assert local_mocks['requests'][-1] == ('/api/generate', {'model': 'one:7b', 'stream': False, 'keep_alive': 0})
     assert local_mocks['reports'] == [out]
-    assert len((out / 'results.jsonl').read_text().splitlines()) == 20
+    assert len((out / 'results.jsonl').read_text(encoding='utf-8').splitlines()) == 20
     assert main(args) == 2
     assert len(local_mocks['generate']) == 21  # collision never starts a generation
 
@@ -251,8 +251,8 @@ def test_partial_run_reports_only_completed(tmp_path, local_mocks, failure, code
     local_mocks.update(fail_at=4, failure=failure)
     assert main(individual_args(tmp_path) + ['--run-id', 'partial']) == code
     out = tmp_path / 'results/student-1/partial'
-    manifest = json.loads((out / 'manifest.json').read_text())
-    summary = json.loads((out / 'summary.json').read_text())['one:7b']
+    manifest = json.loads((out / 'manifest.json').read_text(encoding='utf-8'))
+    summary = json.loads((out / 'summary.json').read_text(encoding='utf-8'))['one:7b']
     assert manifest['run_status'] == status
     assert manifest['completed_attempts'] == summary['completed'] == 2
     assert summary['planned'] == 20
@@ -318,7 +318,7 @@ def test_individual_real_report_metadata(tmp_path, local_mocks, monkeypatch):
                 '--license-url', 'https://example.com/license']) == 0
     out = tmp_path / 'results/student-1/report-integration'
     import html
-    report = html.unescape((out / 'REPORT.md').read_text())
+    report = html.unescape((out / 'REPORT.md').read_text(encoding='utf-8'))
     assert 'https://example.com/model-card' in report
     assert 'https://example.com/license' in report
     assert (out / 'NOTES.md').exists()
@@ -359,7 +359,7 @@ def test_verify_cases_records_python_metadata(tmp_path, monkeypatch):
         return {'status': 'test_failure', 'groups': {'hidden': {'failed': 1}}, 'process_exit_code': 1}
     monkeypatch.setattr('harness.__main__.evaluate', evaluate)
     assert main(['verify-cases', '--cases', str(cases), '--out', str(output), '--wall-timeout', '4']) == 0
-    manifest = json.loads((output / 'manifest.json').read_text())
+    manifest = json.loads((output / 'manifest.json').read_text(encoding='utf-8'))
     assert manifest['evaluator']['backend'] == 'python-subprocess'
     assert manifest['evaluator']['wall_timeout'] == 4
     assert len(manifest['evaluator']['runner_hash']) == 64

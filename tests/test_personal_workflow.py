@@ -50,20 +50,20 @@ def test_personal_run_report_notes_and_separate_participants(tmp_path, monkeypat
                            '--cases', str(case_root), '--device-label', 'shared-test-pc'])
         assert result == 0
         run = tmp_path / 'results' / participant / 'run-a'
-        manifest = json.loads((run / 'manifest.json').read_text())
+        manifest = json.loads((run / 'manifest.json').read_text(encoding='utf-8'))
         assert manifest['participant'] == participant and manifest['models'] == ['synthetic:1']
         assert manifest['planned_attempts'] == 20 and manifest['completed_attempts'] == 20
         assert manifest['run_status'] == 'completed'
-        summary = json.loads((run / 'summary.json').read_text())['synthetic:1']
+        summary = json.loads((run / 'summary.json').read_text(encoding='utf-8'))['synthetic:1']
         assert summary['solved'] == 20 and summary['complete']
-        report = (run / 'REPORT.md').read_text()
+        report = (run / 'REPORT.md').read_text(encoding='utf-8')
         assert 'Python evaluator backend: python-subprocess' in html.unescape(report)
         assert 'current user with filesystem and network access' in report
         assert '20/20' in report and 'model-1/B01-r1.raw.json' in report
         assert 'model-1/B10-r2.pytest.log' in report
-        (run / 'NOTES.md').write_text('Human interpretation must survive regeneration.\n')
+        (run / 'NOTES.md').write_text('Human interpretation must survive regeneration.\n', encoding='utf-8')
         assert cli.main(['report', str(run)]) == 0
-        assert (run / 'NOTES.md').read_text() == 'Human interpretation must survive regeneration.\n'
+        assert (run / 'NOTES.md').read_text(encoding='utf-8') == 'Human interpretation must survive regeneration.\n'
     assert len(prompts) == 42  # two independent personal runs, each warmup1 + attempts20
     assert all('=== test_hidden.py ===' not in p and '=== reference.py ===' not in p for p in prompts)
     assert calls.count('/api/show') == 2 and calls.count('/api/generate') == 2  # unload only
