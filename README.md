@@ -1,19 +1,45 @@
 # KANT Project 1: 로컬 LLM 코딩 성능 비교
 
-**로컬 모델 2개의 Python 백엔드 버그 수정 능력을 자동 테스트로 비교합니다.** 에이전트·UI·Tool Calling·재수정 루프는 만들지 않습니다. 같은 입력에서 첫 답변 한 번만 받고, 전체 테스트를 통과해야 해결입니다.
+**팀원 각자가 담당 로컬 모델 하나를 20회 테스트하고, 자동 보고서와 본인 해석을 남겨 push합니다.** 팀 전체에서는 서로 다른 모델 최소 2개를 비교합니다. 에이전트·UI·Tool Calling·재수정 루프는 없으며, 첫 답변의 전체 테스트 통과만 해결로 인정합니다.
 
+- **[팀원별 실행 → 보고서 → push 가이드](docs/INDIVIDUAL_RUN.md)**
 - [팀 Notion 안내](https://app.notion.com/p/teamsparta/LLM-3dc2dc3ef514806d8b73eb017901cd17)
 - [실험 규약·팀 참여 기록](docs/EXPERIMENT.md)
 - [검증 상태](docs/VALIDATION.md)
 - [결과·모델 선정 양식](docs/RESULTS_TEMPLATE.md)
 - [Cloud API 비교 방법](docs/CLOUD.md)
 
+## 가장 빠른 개인 실행 흐름
+Windows PowerShell 예시입니다. Git·uv·Ollama·Docker Desktop(Linux 컨테이너)이 설치되어 있어야 합니다. 모델 태그와 본인 ID는 직접 정합니다.
+
+```powershell
+git switch main
+if ($LASTEXITCODE -ne 0) { throw "main 전환 실패" }
+git pull --rebase origin main
+if ($LASTEXITCODE -ne 0) { throw "최신 main 반영 실패" }
+$Me = "your-github-id"
+$Model = "REPLACE:full-tag"
+ollama pull $Model
+if ($LASTEXITCODE -ne 0) { throw "모델 다운로드 실패" }
+.\scripts\run-personal.ps1 -Participant $Me -Model $Model -DeviceLabel "classroom-pc-01"
+```
+
+스크립트는 환경 준비·Docker 빌드·정답/버그 사전 검증 후 **모델 하나 × 10문제 × 2회**를 실행합니다. 결과는 `results/<본인ID>/<실행ID>/`에 자동 저장됩니다.
+
+- `REPORT.md`: 숫자·문제별 결과·환경·근거를 자동 작성
+- `NOTES.md`: 모델 선택 이유·실패 사례·해석·민감 정보 확인을 팀원이 작성
+- 보고서 재생성: `uv run python -m harness report <개인 실행 폴더>`
+- 검토 후 **본인 실행 폴더만** `git add`, commit, 최신 main 반영, push
+- 스크립트는 git commit/push나 보안 정책 변경을 자동 실행하지 않음
+
+스크립트 사용이 어려우면 [수동 CLI와 정확한 push 명령](docs/INDIVIDUAL_RUN.md)을 따릅니다. PowerShell 스크립트와 실제 Docker/Ollama 실행은 수업 장비에서 확인해야 합니다.
+
 ## 팀원이 먼저 할 일
 1. 한 문제의 `prompt.md → starter.py → test_public.py`를 읽습니다.
 2. 사람이 기준을 검토할 때만 `test_hidden.py`와 `reference.py`를 봅니다. 이 둘은 모델 입력에서 제외합니다.
 3. Windows 수업 노트북의 GPU·VRAM·RAM, Ollama 및 Docker Linux 컨테이너 작동을 확인합니다.
 4. Docker 검증으로 정답은 모두 통과하고 초기 코드에서는 버그가 잡히는지 확인합니다.
-5. 서로 다른 모델 2개의 Model Card·License·전체 태그와 생성 설정을 확정한 뒤 본 실험을 시작합니다.
+5. 팀에서 서로 다른 모델을 배정하고, 각자는 담당 모델의 Model Card·License·전체 태그를 기록합니다. 모두 같은 문제·생성 설정을 사용합니다. 공정한 속도 비교와 발제문 기본 요건을 위해 공통 평가 PC에서 각자 실행하는 방식을 권장합니다.
 
 **아직 모델 성능 결과는 없습니다.** 노트북 사양·모델 후보·Docker 실장비 실행·팀 역할은 확인해야 합니다. 2060 계열 GPU는 사용자 기억이며 확정 사양이 아닙니다.
 
@@ -49,7 +75,7 @@ uv run python -m harness verify-cases --out runs/verify-001
 
 `runs/verify-001/verification_summary.json`의 `all_valid`가 true여야 합니다. 정답 10개가 모든 테스트를 통과하고 초기 코드 10개에서 평가 테스트 최소 1개가 실패해야 합니다. Docker 오류를 모델 오답으로 해석하지 마세요.
 
-## 로컬 본 실험: 40회
+## 선택: 한 사람이 두 모델을 연속 실행하는 기존 방식
 같은 PC에서 모델을 하나씩 실행합니다. 다른 모델이나 무거운 작업은 먼저 종료하고 모델 다운로드를 완료하세요. 아래 태그는 **교체용 자리표시자이지 추천 모델이 아닙니다.**
 
 ```powershell
@@ -75,7 +101,9 @@ uv run python -m harness summarize runs/local-001
 - `*.pytest.log`: 테스트 근거
 - `summary.json`: 모델별 집계
 
-출력은 새 디렉터리만 허용합니다. 중단 후 재시작은 새 경로를 사용하고, 미완료 실행을 완전한 실험과 섞지 마세요. 실행 로그는 기본 gitignore 대상입니다. 제출 시 키·민감 정보 미포함을 검토한 결과만 별도 `results/` 폴더 등에 복사해 커밋하세요. 모델 가중치·가상환경은 제외합니다.
+개인 `run-model`은 `results/<participant>/<run-id>/`에 보고서·원본·로그를 함께 만들며 **Git 추적 대상**입니다. 검토 후 그 실행 폴더만 커밋하면 됩니다. 기존 `run --out runs/...` 및 사전 검증의 `runs/`는 계속 gitignore 대상이며, 이 방식의 제출 결과만 별도 results 폴더로 복사해야 합니다.
+
+출력은 새 디렉터리만 허용합니다. 중단된 실행도 보고서에서 미완료로 구분하고 완전한 실행과 섞지 마세요. API 키·민감 정보·모델 가중치·가상환경은 커밋하지 않습니다.
 
 ## 비교 기준
 - **주 지표:** 완전 해결 횟수 / 계획 20회(모델별)

@@ -5,12 +5,15 @@ import math
 from pathlib import Path
 import re
 import sys
+import subprocess
+from uuid import uuid4
 import time
 
 from .core import (CASE_IDS, CLOUD_IDS, ExtractionError, append_jsonl, atomic_write,
                    build_prompt, case_path, extract_python, metrics, sha256, summarize, write_json)
 from .evaluator import docker_preflight, evaluate
 from .ollama import CallFailure, Ollama
+from .reporting import capture_environment, write_report
 
 NOTICE = ("Resource isolation only, not an adversarially secure sandbox. Hidden tests are excluded "
           "from prompts, but generated code can inspect the read-only test mount and shares pytest's "
@@ -46,9 +49,52 @@ def memory_limit(value):
 
 
 def full_tag(value):
-    if ":" not in value.rsplit("/", 1)[-1] or value.startswith("-") or any(c.isspace() for c in value):
+    name, separator, tag = value.rsplit("/", 1)[-1].partition(":")
+    if not name or not separator or not tag or value.startswith("-") or any(c.isspace() for c in value):
         raise argparse.ArgumentTypeError("supply the full Ollama tag, e.g. qwen2.5-coder:7b")
     return value
+
+
+def safe_id(value):
+    if (not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", value, flags=re.ASCII)
+            or re.fullmatch(r"CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]", value, flags=re.IGNORECASE)):
+        raise argparse.ArgumentTypeError("use a lowercase ASCII ID (1-64 alnum/_/- characters); reserved names forbidden")
+    return value
+
+
+def source_state():
+    """Read only commit and dirty boolean; never retain paths or git diagnostics."""
+    source = Path(__file__).resolve().parent.parent
+    def git(*arguments):
+        process = subprocess.Popen(["git", "-C", str(source), *arguments],
+                                   stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        try:
+            output, _ = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            raise OSError("git inspection timed out")
+        if process.returncode:
+            raise OSError("git inspection unavailable")
+        return output.decode("utf-8", errors="replace").strip()
+    try:
+        commit = git("rev-parse", "HEAD")
+        if not re.fullmatch(r"[0-9a-f]{40,64}", commit):
+            return {"source_commit": None, "source_dirty": None}
+        dirty = bool(git("status", "--porcelain", "--untracked-files=normal", "--", ".",
+                         ":(exclude)results", ":(exclude)runs"))
+        return {"source_commit": commit, "source_dirty": dirty}
+    except OSError:
+        return {"source_commit": None, "source_dirty": None}
+
+
+def add_generation_args(local):
+    local.add_argument("--url", default="http://127.0.0.1:11434")
+    local.add_argument("--call-timeout", type=positive_float, default=180.0)
+    local.add_argument("--num-ctx", type=positive_int, default=8192)
+    local.add_argument("--num-predict", type=positive_int, default=2048)
+    local.add_argument("--temperature", type=temperature, default=0.2)
+    local.add_argument("--seed", type=int, default=42, help="repeat seeds are seed and seed+1")
 
 
 def add_eval_args(parser):
@@ -64,12 +110,18 @@ def parser():
     commands = root.add_subparsers(dest="command", required=True)
     local = commands.add_parser("run", help="two Ollama models x ten cases x two attempts")
     local.add_argument("--models", nargs=2, required=True, type=full_tag)
-    local.add_argument("--url", default="http://127.0.0.1:11434")
-    local.add_argument("--call-timeout", type=positive_float, default=180.0)
-    local.add_argument("--num-ctx", type=positive_int, default=8192)
-    local.add_argument("--num-predict", type=positive_int, default=2048)
-    local.add_argument("--temperature", type=temperature, default=0.2)
-    local.add_argument("--seed", type=int, default=42, help="repeat seeds are seed and seed+1")
+    single = commands.add_parser("run-model", help="one Ollama model x ten cases x two independent attempts")
+    single.add_argument("--participant", required=True, type=safe_id)
+    single.add_argument("--model", required=True, type=full_tag)
+    single.add_argument("--run-id", type=safe_id)
+    single.add_argument("--results-root", type=Path, default=Path("results"))
+    single.add_argument("--device-label")
+    single.add_argument("--model-card-url")
+    single.add_argument("--license-url")
+    single.add_argument("--cases", type=Path, default=Path("cases"))
+    single.add_argument("--out", type=Path, help="explicit new output directory; existing paths rejected")
+    for sub in (local, single):
+        add_generation_args(sub)
     verify = commands.add_parser("verify-cases", help="references pass; starters fail at least one hidden test")
     export = commands.add_parser("export-cloud", help="fixed five-case subset; independent manual calls")
     export.add_argument("--repeats", type=int, choices=(1,), default=1,
@@ -81,10 +133,12 @@ def parser():
     for sub in (local, verify, export, cloud):
         sub.add_argument("--cases", type=Path, default=Path("cases"))
         sub.add_argument("--out", type=Path, required=True, help="new output directory; existing paths rejected")
-    for sub in (local, verify, cloud):
+    for sub in (local, single, verify, cloud):
         add_eval_args(sub)
     summary = commands.add_parser("summarize")
     summary.add_argument("run_directory", type=Path)
+    report = commands.add_parser("report", help="regenerate report without model or Docker calls")
+    report.add_argument("run_directory", type=Path)
     extraction = commands.add_parser("extract", help="extract code without importing or executing it")
     extraction.add_argument("raw_text", type=Path)
     extraction.add_argument("--out", type=Path, required=True)
@@ -134,17 +188,39 @@ def finish(args, records, manifest):
     summary = summarize(records, manifest["models"], manifest["cases"], manifest["repeats"])
     write_json(args.out / "summary.json", summary)
     print(json.dumps(summary, indent=2))
+    report_path = write_report(args.out)
+    print("Report: " + str(report_path))
     return 0
 
 
 def run_local(args):
-    if len(set(args.models)) != 2:
+    environment = capture_environment()
+    provenance = source_state()
+    if args.command == "run-model":
+        if args.out is not None and args.run_id is not None:
+            raise ValueError("--out and --run-id cannot be combined")
+        args.models = [args.model]
+        if args.out is None:
+            run_id = args.run_id or (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ").lower()
+                                     + "-" + uuid4().hex[:8])
+            args.out = args.results_root / args.participant / run_id
+    elif len(set(args.models)) != 2:
         raise ValueError("two distinct model tags required")
     docker_metadata = docker_preflight(args.image)
     args.eval_image_id = docker_metadata["image_id"]
     client = Ollama(args.url, args.call_timeout)
     prompts = {case: build_prompt(args.cases, case) for case in CASE_IDS}
     manifest = start_run(args, CASE_IDS, args.models, 2, prompts)
+    manifest.update(environment=environment, **provenance)
+    if args.command == "run-model":
+        manifest.update(participant=args.participant, device_label=args.device_label,
+                        model_card_url=args.model_card_url, license_url=args.license_url,
+                        metadata_provenance="participant, device_label, model_card_url and license_url are user supplied; unverified")
+        manifest["model_sources"] = {args.model: {"model_card_url": args.model_card_url,
+                                                  "license_url": args.license_url,
+                                                  "provenance": "user supplied; unverified"}}
+    manifest.update(run_status="in_progress", completed_attempts=0,
+                    planned_attempts=len(args.models) * len(CASE_IDS) * 2)
     manifest["evaluator"].update(docker_metadata)
     options = {"num_ctx": args.num_ctx, "num_predict": args.num_predict,
                "temperature": args.temperature, "seed": args.seed}
@@ -152,54 +228,66 @@ def run_local(args):
                     generation_api="/api/generate", history="reset each request; no context sent")
     write_json(args.out / "manifest.json", manifest)
     records = []
-    for index, model in enumerate(args.models, 1):
-        model_dir = args.out / ("model-%d" % index)
-        model_dir.mkdir()
-        metadata = {"requested_full_tag": model}
-        try:
-            show, _ = client.request("/api/show", {"model": model}, model_dir / "show.raw.json")
-            metadata["show"] = show
-        except CallFailure as exc:
-            metadata["show_error"] = {"status": exc.status, "error": str(exc)}
-        try:
-            warmup, elapsed = client.generate(model, "Reply with OK.", options, model_dir / "warmup.raw.json")
-            metadata["warmup"] = {"phase": "warmup", "status": "ok", "elapsed_seconds": elapsed}
-        except CallFailure as exc:
-            metadata["warmup"] = {"phase": "warmup", "status": exc.status, "error": str(exc)}
-        write_json(model_dir / "metadata.json", metadata)
-        try:
-            for case in CASE_IDS:
-                for repeat in (1, 2):
-                    stem = "model-%d/%s-r%d" % (index, case, repeat)
-                    attempt_options = dict(options, seed=args.seed + repeat - 1)
-                    row = {"phase": "attempt", "model": model, "case": case, "repeat": repeat,
-                           "options": attempt_options, "prompt_sha256": sha256(prompts[case]),
-                           "raw_response": stem + ".raw.json"}
-                    try:
-                        response, elapsed = client.generate(model, prompts[case], attempt_options,
-                                                            args.out / row["raw_response"])
-                        row["response_model"] = response.get("model")
-                        ps = None
-                        try:
-                            ps = client.ps(model, args.out / (stem + ".ps.json"))
-                        except CallFailure as exc:
-                            row["ps_error"] = {"status": exc.status, "error": str(exc)}
-                        row["metrics"] = metrics(response, elapsed, ps, model)
-                        row.update(response_result(args, response["response"], case, stem))
-                    except CallFailure as exc:
-                        row.update(status=exc.status, error=str(exc), metrics=metrics({}, exc.elapsed))
-                        if not (args.out / row["raw_response"]).exists():
-                            row["raw_response"] = None  # no server bytes were received
-                    records.append(row)
-                    append_jsonl(args.out / "results.jsonl", row)
-                    print("%s %s r%d: %s" % (model, case, repeat, row["status"]), file=sys.stderr)
-        finally:
-            # Explicitly unload this benchmark model before starting the next; not an attempt/retry.
+    try:
+        for index, model in enumerate(args.models, 1):
+            model_dir = args.out / ("model-%d" % index)
+            model_dir.mkdir()
             try:
-                client.request("/api/generate", {"model": model, "stream": False, "keep_alive": 0},
-                               model_dir / "unload.raw.json")
-            except CallFailure as exc:
-                write_json(model_dir / "unload.error.json", {"status": exc.status, "error": str(exc)})
+                metadata = {"requested_full_tag": model}
+                try:
+                    show, _ = client.request("/api/show", {"model": model}, model_dir / "show.raw.json")
+                    metadata["show"] = show
+                except CallFailure as exc:
+                    metadata["show_error"] = {"status": exc.status, "error": str(exc)}
+                try:
+                    warmup, elapsed = client.generate(model, "Reply with OK.", options, model_dir / "warmup.raw.json")
+                    metadata["warmup"] = {"phase": "warmup", "status": "ok", "elapsed_seconds": elapsed}
+                except CallFailure as exc:
+                    metadata["warmup"] = {"phase": "warmup", "status": exc.status, "error": str(exc)}
+                write_json(model_dir / "metadata.json", metadata)
+                for case in CASE_IDS:
+                    for repeat in (1, 2):
+                        stem = "model-%d/%s-r%d" % (index, case, repeat)
+                        attempt_options = dict(options, seed=args.seed + repeat - 1)
+                        row = {"phase": "attempt", "model": model, "case": case, "repeat": repeat,
+                               "options": attempt_options, "prompt_sha256": sha256(prompts[case]),
+                               "raw_response": stem + ".raw.json"}
+                        try:
+                            response, elapsed = client.generate(model, prompts[case], attempt_options,
+                                                                args.out / row["raw_response"])
+                            row["response_model"] = response.get("model")
+                            ps = None
+                            try:
+                                ps = client.ps(model, args.out / (stem + ".ps.json"))
+                            except CallFailure as exc:
+                                row["ps_error"] = {"status": exc.status, "error": str(exc)}
+                            row["metrics"] = metrics(response, elapsed, ps, model)
+                            row.update(response_result(args, response["response"], case, stem))
+                        except CallFailure as exc:
+                            row.update(status=exc.status, error=str(exc), metrics=metrics({}, exc.elapsed))
+                            if not (args.out / row["raw_response"]).exists():
+                                row["raw_response"] = None  # no server bytes were received
+                        records.append(row)
+                        append_jsonl(args.out / "results.jsonl", row)
+                        print("%s %s r%d: %s" % (model, case, repeat, row["status"]), file=sys.stderr)
+            finally:
+                # Explicitly unload this benchmark model before starting the next; not an attempt/retry.
+                try:
+                    client.request("/api/generate", {"model": model, "stream": False, "keep_alive": 0},
+                                   model_dir / "unload.raw.json")
+                except CallFailure as exc:
+                    write_json(model_dir / "unload.error.json", {"status": exc.status, "error": str(exc)})
+    except BaseException as exc:
+        manifest.update(run_status="interrupted" if isinstance(exc, KeyboardInterrupt) else "incomplete",
+                        completed_attempts=len(records), failure_type=type(exc).__name__)
+        try:
+            write_json(args.out / "manifest.json", manifest)
+            finish(args, records, manifest)
+        except Exception:
+            print("warning: incomplete run report could not be written", file=sys.stderr)
+        raise
+    manifest.update(run_status="completed", completed_attempts=len(records))
+    write_json(args.out / "manifest.json", manifest)
     return finish(args, records, manifest)
 
 
@@ -287,8 +375,11 @@ def import_cloud(args):
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
-        if args.command == "run":
+        if args.command in ("run", "run-model"):
             return run_local(args)
+        if args.command == "report":
+            print("Report: " + str(write_report(args.run_directory)))
+            return 0
         if args.command == "verify-cases":
             return verify_cases(args)
         if args.command == "export-cloud":
@@ -306,7 +397,7 @@ def main(argv=None):
             records = [json.loads(line) for line in results_path.read_text(encoding="utf-8").splitlines() if line.strip()] if results_path.exists() else []
             print(json.dumps(summarize(records, manifest["models"], manifest["cases"], manifest["repeats"]), indent=2))
             return 0
-    except (OSError, ValueError, KeyError) as exc:
+    except Exception as exc:
         print("error: " + str(exc), file=sys.stderr)
         return 2
     except KeyboardInterrupt:
