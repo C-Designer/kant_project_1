@@ -1,0 +1,29 @@
+...FFF....
+================================== FAILURES ===================================
+__________________________ test_after_stock_rollback __________________________
+test_hidden.py:16: in test_after_stock_rollback
+    assert (stock, orders) == before
+E   AssertionError: assert ({'a': 2, 'b'...'confirmed'}}) == ({'a': 4, 'b'...'confirmed'}})
+E     
+E     At index 0 diff: {'a': 2, 'b': 2} != {'a': 4, 'b': 5}
+E     Use -v to get more diff
+__________________________ test_after_order_rollback __________________________
+test_hidden.py:26: in test_after_order_rollback
+    assert (stock, orders) == before
+E   AssertionError: assert ({'a': 0, 'b'...'confirmed'}}) == ({'a': 4, 'b'...'confirmed'}})
+E     
+E     At index 0 diff: {'a': 0, 'b': 0} != {'a': 4, 'b': 5}
+E     Use -v to get more diff
+__________________________ test_failure_then_success __________________________
+test_hidden.py:35: in test_failure_then_success
+    assert place_order(stock, orders, "new", {"a": 3}) == {"items": {"a": 3}, "status": "confirmed"}
+solution.py:9: in place_order
+    raise ValueError("unavailable stock")
+E   ValueError: unavailable stock
+=========================== short test summary info ===========================
+FAILED test_hidden.py::test_after_stock_rollback - AssertionError: assert ({'...
+FAILED test_hidden.py::test_after_order_rollback - AssertionError: assert ({'...
+FAILED test_hidden.py::test_failure_then_success - ValueError: unavailable stock
+3 failed, 7 passed in 0.04s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_normal", "outcome": "passed"}, {"nodeid": "test_public.py::test_multiple_and_unrelated", "outcome": "passed"}, {"nodeid": "test_public.py::test_exact_stock", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_after_stock_rollback", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_after_order_rollback", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_failure_then_success", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_shortage_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_missing_sku_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_duplicate_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_copies_and_sequential_success", "outcome": "passed"}], "version": 1}

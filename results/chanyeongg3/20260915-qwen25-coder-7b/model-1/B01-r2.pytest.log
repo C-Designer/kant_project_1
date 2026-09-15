@@ -1,0 +1,36 @@
+....FF...F
+================================== FAILURES ===================================
+__________________________ test_per_line_regression ___________________________
+test_hidden.py:5: in test_per_line_regression
+    assert invoice_total([("0.005", 1), ("0.005", 1)]) == "0.02"
+E   AssertionError: assert '0.01' == '0.02'
+E     
+E     - 0.02
+E     ?    ^
+E     + 0.01
+E     ?    ^
+____________________ test_no_rounding_carry_between_lines _____________________
+test_hidden.py:8: in test_no_rounding_carry_between_lines
+    assert invoice_total([("0.004", 1), ("0.004", 1)]) == "0.00"
+E   AssertionError: assert '0.01' == '0.00'
+E     
+E     - 0.00
+E     ?    ^
+E     + 0.01
+E     ?    ^
+______________________ test_input_and_context_unchanged _______________________
+test_hidden.py:24: in test_input_and_context_unchanged
+    assert invoice_total(lines) == "7.48"
+E   AssertionError: assert '7.47' == '7.48'
+E     
+E     - 7.48
+E     ?    ^
+E     + 7.47
+E     ?    ^
+=========================== short test summary info ===========================
+FAILED test_hidden.py::test_per_line_regression - AssertionError: assert '0.0...
+FAILED test_hidden.py::test_no_rounding_carry_between_lines - AssertionError:...
+FAILED test_hidden.py::test_input_and_context_unchanged - AssertionError: ass...
+3 failed, 7 passed in 0.03s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_empty", "outcome": "passed"}, {"nodeid": "test_public.py::test_integer_prices", "outcome": "passed"}, {"nodeid": "test_public.py::test_half_up", "outcome": "passed"}, {"nodeid": "test_public.py::test_quantity_before_rounding", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_per_line_regression", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_no_rounding_carry_between_lines", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_zero_quantity", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_maximum_total", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_decimal_precision_boundary", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_input_and_context_unchanged", "outcome": "failed"}], "version": 1}

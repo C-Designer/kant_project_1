@@ -1,0 +1,56 @@
+...F..FFFF
+================================== FAILURES ===================================
+__________________________________ test_null __________________________________
+test_hidden.py:11: in test_null
+    assert update_profile(p, {"bio": None}) == {"display_name": "Ada", "bio": None, "alerts": True}
+E   AssertionError: assert {'alerts': Tr..._name': 'Ada'} == {'alerts': Tr..._name': 'Ada'}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'bio': ''} != {'bio': None}
+E     Use -v to get more diff
+_____________________________ test_unknown_atomic _____________________________
+test_hidden.py:32: in test_unknown_atomic
+    assert p == profile()
+E   AssertionError: assert {'alerts': Tr..._name': 'Bob'} == {'alerts': Tr..._name': 'Ada'}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'display_name': 'Bob'} != {'display_name': 'Ada'}
+E     Use -v to get more diff
+____________________________ test_name_null_atomic ____________________________
+test_hidden.py:40: in test_name_null_atomic
+    assert p == profile()
+E   AssertionError: assert {'alerts': Tr..._name': 'Ada'} == {'alerts': Tr..._name': 'Ada'}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'bio': 'new'} != {'bio': 'hello'}
+E     Use -v to get more diff
+___________________________ test_alerts_null_atomic ___________________________
+test_hidden.py:47: in test_alerts_null_atomic
+    assert p == profile()
+E   AssertionError: assert {'alerts': Tr..._name': 'Bob'} == {'alerts': Tr..._name': 'Ada'}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'display_name': 'Bob'} != {'display_name': 'Ada'}
+E     Use -v to get more diff
+_____________________________ test_copy_and_patch _____________________________
+test_hidden.py:55: in test_copy_and_patch
+    assert p == {"display_name": "Ada", "bio": None, "alerts": False}
+E   AssertionError: assert {'alerts': Fa..._name': 'Ada'} == {'alerts': Fa..._name': 'Ada'}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'bio': ''} != {'bio': None}
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED test_hidden.py::test_null - AssertionError: assert {'alerts': Tr..._na...
+FAILED test_hidden.py::test_unknown_atomic - AssertionError: assert {'alerts'...
+FAILED test_hidden.py::test_name_null_atomic - AssertionError: assert {'alert...
+FAILED test_hidden.py::test_alerts_null_atomic - AssertionError: assert {'ale...
+FAILED test_hidden.py::test_copy_and_patch - AssertionError: assert {'alerts'...
+5 failed, 5 passed in 0.04s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_name", "outcome": "passed"}, {"nodeid": "test_public.py::test_empty", "outcome": "passed"}, {"nodeid": "test_public.py::test_multiple", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_null", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_false", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_empty_strings", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_unknown_atomic", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_name_null_atomic", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_alerts_null_atomic", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_copy_and_patch", "outcome": "failed"}], "version": 1}
