@@ -1,0 +1,6 @@
+**
+!Dockerfile
+!requirements.txt
+!harness/
+!harness/docker_runner.py
+!harness/pytest.ini
