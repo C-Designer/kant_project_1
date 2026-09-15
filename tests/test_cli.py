@@ -12,9 +12,9 @@ def test_defaults():
     assert CLOUD_IDS == ('B01', 'B04', 'B06', 'B08', 'B10')
 
 
-@pytest.mark.parametrize('extra', [['--num-ctx', '0'], ['--num-predict', '-1'], ['--cpus', 'nan'],
+@pytest.mark.parametrize('extra', [['--num-ctx', '0'], ['--num-predict', '-1'], ['--wall-timeout', 'nan'],
                                   ['--wall-timeout', '0'], ['--temperature', '-.1'],
-                                  ['--memory', '0m'], ['--pids', '-1'], ['--temperature', 'inf']])
+                                  ['--call-timeout', '0'], ['--wall-timeout', 'inf'], ['--temperature', 'inf']])
 def test_invalid_args(extra):
     with pytest.raises(SystemExit):
         parser().parse_args(['run', '--models', 'one:7b', 'two:7b', '--out', 'out'] + extra)
@@ -79,44 +79,32 @@ def test_cloud_import_rejects_other_repeat_counts(tmp_path, repeats, capsys):
     assert not output.exists()
 
 
-@pytest.mark.parametrize('failure', ['missing_cli', 'daemon_down', 'missing_image', 'timeout'])
+@pytest.mark.parametrize('failure', ['missing_pytest', 'invalid_python', 'timeout'])
 def test_run_preflight_failure_makes_no_ollama_calls(monkeypatch, tmp_path, capsys, failure):
-    import subprocess
-    from types import SimpleNamespace
-    commands = []
-    def docker(command, **kwargs):
-        commands.append(command)
-        if failure == 'missing_cli':
-            raise FileNotFoundError('docker')
-        if failure == 'timeout':
-            raise subprocess.TimeoutExpired(command, 15)
-        if failure == 'daemon_down' or command[1] == 'image':
-            return SimpleNamespace(returncode=1, stdout='', stderr='unavailable')
-        return SimpleNamespace(returncode=0, stdout='27.5.1\n', stderr='')
+    calls = []
+    def preflight():
+        calls.append('preflight')
+        raise ValueError('Python preflight failed: ' + failure)
     def forbidden_client(*args, **kwargs):
         pytest.fail('Ollama must not even be constructed before preflight succeeds')
     monkeypatch.setattr('harness.__main__.capture_environment', lambda: {'os': 'test-os'})
-    monkeypatch.setattr('harness.evaluator.subprocess.run', docker)
+    monkeypatch.setattr('harness.__main__.python_preflight', preflight)
     monkeypatch.setattr('harness.__main__.Ollama', forbidden_client)
     output = tmp_path / 'run'
     assert main(['run', '--models', 'a:1', 'b:1', '--out', str(output)]) == 2
-    assert 'Docker preflight failed' in capsys.readouterr().err
+    assert 'Python preflight failed' in capsys.readouterr().err
     assert not output.exists()
-    assert len(commands) == (2 if failure == 'missing_image' else 1)
+    assert calls == ['preflight']
 
 
-def test_run_records_preflight_metadata_and_pins_image(monkeypatch, tmp_path):
-    from types import SimpleNamespace
-    image_id = 'sha256:' + 'a' * 64
+def test_run_records_preflight_metadata_and_timeout(monkeypatch, tmp_path):
     events = []
-    def docker(command, **kwargs):
-        events.append(command[1])
-        return SimpleNamespace(returncode=0,
-                               stdout='27.5.1\n' if command[1] == 'version' else image_id + '\n',
-                               stderr='')
+    def preflight():
+        events.append('preflight')
+        return {'backend': 'python-subprocess', 'python_version': '3.12.test', 'pytest_version': '8.test'}
     class FakeOllama:
         def __init__(self, *args):
-            assert events == ['version', 'image']
+            assert events == ['preflight']
             events.append('ollama')
         def request(self, *args, **kwargs):
             return {}, .01
@@ -124,22 +112,26 @@ def test_run_records_preflight_metadata_and_pins_image(monkeypatch, tmp_path):
             return {'response': '```python\npass\n```', 'done': True}, .01
         def ps(self, *args, **kwargs):
             return {'models': []}
-    evaluated_images = []
-    def evaluator(*args, **kwargs):
-        evaluated_images.append(kwargs['image'])
-        return {'status': 'solved'}
+    evaluations = []
+    def evaluator(code, directory, wall_timeout=30.0, log_path=None):
+        evaluations.append((wall_timeout, log_path))
+        return {'status': 'solved', 'process_exit_code': 0}
     monkeypatch.setattr('harness.__main__.capture_environment', lambda: {'os': 'test-os'})
-    monkeypatch.setattr('harness.evaluator.subprocess.run', docker)
+    monkeypatch.setattr('harness.__main__.python_preflight', preflight)
     monkeypatch.setattr('harness.__main__.Ollama', FakeOllama)
     monkeypatch.setattr('harness.__main__.evaluate', evaluator)
     cases, output = tmp_path / 'cases', tmp_path / 'run'
     make_cases(cases)
-    assert main(['run', '--models', 'a:1', 'b:1', '--cases', str(cases), '--out', str(output)]) == 0
+    assert main(['run', '--models', 'a:1', 'b:1', '--cases', str(cases), '--out', str(output),
+                 '--wall-timeout', '2.5']) == 0
     manifest = json.loads((output / 'manifest.json').read_text())
-    assert manifest['evaluator']['image_id'] == image_id
-    assert manifest['evaluator']['docker_server_version'] == '27.5.1'
-    assert manifest['evaluator']['requested_image'] == 'kant-harness:1'
-    assert evaluated_images == [image_id] * 40
+    assert manifest['evaluator']['backend'] == 'python-subprocess'
+    assert manifest['evaluator']['python_version'] == '3.12.test'
+    assert manifest['evaluator']['pytest_version'] == '8.test'
+    assert len(manifest['evaluator']['runner_hash']) == 64
+    assert manifest['evaluator']['wall_timeout'] == 2.5
+    assert len(evaluations) == 40 and all(timeout == 2.5 and log for timeout, log in evaluations)
+    assert 'current user with filesystem and network access' in manifest['execution_notice']
 
 
 @pytest.fixture
@@ -148,7 +140,7 @@ def local_mocks(monkeypatch):
     state = {'generate': [], 'requests': [], 'reports': [], 'evaluations': []}
     monkeypatch.setattr(cli, 'capture_environment', lambda: {'os': 'test-os'})
     monkeypatch.setattr(cli, 'source_state', lambda: {'source_commit': 'a' * 40, 'source_dirty': True})
-    monkeypatch.setattr(cli, 'docker_preflight', lambda image: {'image_id': 'sha256:fixed'})
+    monkeypatch.setattr(cli, 'python_preflight', lambda: {'backend': 'python-subprocess', 'python_version': '3.test', 'pytest_version': '8.test'})
     def report(out):
         assert (out / 'summary.json').exists()
         state['reports'].append(out)
@@ -202,7 +194,8 @@ def test_individual_twenty_warmup_unload_metadata(tmp_path, local_mocks):
     assert local_mocks['generate'][0][1] == 'Reply with OK.'
     assert [call[2]['seed'] for call in local_mocks['generate'][1:]] == [42, 43] * 10
     assert len(local_mocks['evaluations']) == 20
-    assert all(e['image'] == 'sha256:fixed' for e in local_mocks['evaluations'])
+    assert all(e['wall_timeout'] == 30.0 and set(e) == {'wall_timeout', 'log_path'}
+               for e in local_mocks['evaluations'])
     assert local_mocks['requests'][-1] == ('/api/generate', {'model': 'one:7b', 'stream': False, 'keep_alive': 0})
     assert local_mocks['reports'] == [out]
     assert len((out / 'results.jsonl').read_text().splitlines()) == 20
@@ -240,12 +233,12 @@ def test_individual_options_and_old_participant_rejected():
         parser().parse_args(['run-model', '--participant', 'a', '--model', 'one'])
 
 
-def test_individual_no_docker_no_model_calls(tmp_path, local_mocks, monkeypatch):
+def test_individual_failed_preflight_no_model_calls(tmp_path, local_mocks, monkeypatch):
     def blocked(*args):
-        raise ValueError('Docker preflight failed')
+        raise ValueError('Python preflight failed')
     def forbidden(*args):
         pytest.fail('must not construct model client')
-    monkeypatch.setattr('harness.__main__.docker_preflight', blocked)
+    monkeypatch.setattr('harness.__main__.python_preflight', blocked)
     monkeypatch.setattr('harness.__main__.Ollama', forbidden)
     assert main(individual_args(tmp_path)) == 2
     assert not (tmp_path / 'results').exists()
@@ -267,12 +260,12 @@ def test_partial_run_reports_only_completed(tmp_path, local_mocks, failure, code
     assert local_mocks['requests'][-1][1]['keep_alive'] == 0
 
 
-def test_report_command_no_model_or_docker(tmp_path, monkeypatch):
+def test_report_command_no_model_or_evaluator(tmp_path, monkeypatch):
     import harness.__main__ as cli
     calls = []
     def forbidden(*args):
-        pytest.fail('report must not inspect Docker/models/environment')
-    monkeypatch.setattr(cli, 'docker_preflight', forbidden)
+        pytest.fail('report must not inspect evaluator/models/environment')
+    monkeypatch.setattr(cli, 'python_preflight', forbidden)
     monkeypatch.setattr(cli, 'Ollama', forbidden)
     monkeypatch.setattr(cli, 'capture_environment', forbidden)
     monkeypatch.setattr(cli, 'write_report', lambda out: calls.append(out) or out / 'report.md')
@@ -329,3 +322,45 @@ def test_individual_real_report_metadata(tmp_path, local_mocks, monkeypatch):
     assert 'https://example.com/model-card' in report
     assert 'https://example.com/license' in report
     assert (out / 'NOTES.md').exists()
+
+
+@pytest.mark.parametrize('command', ['verify-cases', 'import-cloud'])
+def test_non_model_execution_preflight_failure(tmp_path, monkeypatch, command):
+    cases, output = tmp_path / 'cases', tmp_path / 'run'
+    make_cases(cases)
+    calls = []
+    def preflight():
+        calls.append('preflight')
+        raise ValueError('Python preflight failed')
+    def forbidden(*args, **kwargs):
+        pytest.fail('failed preflight must not execute generated code or call a model')
+    monkeypatch.setattr('harness.__main__.python_preflight', preflight)
+    monkeypatch.setattr('harness.__main__.evaluate', forbidden)
+    monkeypatch.setattr('harness.__main__.Ollama', forbidden)
+    args = [command, '--cases', str(cases), '--out', str(output)]
+    if command == 'import-cloud':
+        bundle = tmp_path / 'bundle'
+        assert main(['export-cloud', '--cases', str(cases), '--out', str(bundle)]) == 0
+        args += ['--bundle', str(bundle), '--responses', str(tmp_path / 'responses'), '--model', 'cloud/version']
+    assert main(args) == 2
+    assert calls == ['preflight'] and not output.exists()
+
+
+def test_verify_cases_records_python_metadata(tmp_path, monkeypatch):
+    cases, output = tmp_path / 'cases', tmp_path / 'verification'
+    make_cases(cases)
+    monkeypatch.setattr('harness.__main__.python_preflight', lambda: {
+        'backend': 'python-subprocess', 'python_version': '3.test', 'pytest_version': '8.test'})
+    calls = []
+    def evaluate(code, directory, wall_timeout=30.0, log_path=None):
+        calls.append(wall_timeout)
+        if code == 'REFERENCE_SECRET':
+            return {'status': 'solved', 'process_exit_code': 0}
+        return {'status': 'test_failure', 'groups': {'hidden': {'failed': 1}}, 'process_exit_code': 1}
+    monkeypatch.setattr('harness.__main__.evaluate', evaluate)
+    assert main(['verify-cases', '--cases', str(cases), '--out', str(output), '--wall-timeout', '4']) == 0
+    manifest = json.loads((output / 'manifest.json').read_text())
+    assert manifest['evaluator']['backend'] == 'python-subprocess'
+    assert manifest['evaluator']['wall_timeout'] == 4
+    assert len(manifest['evaluator']['runner_hash']) == 64
+    assert calls == [4] * 20

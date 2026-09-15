@@ -6,9 +6,9 @@
 
 ## 환경
 - 실험 commit SHA / 실행 날짜 / 실행자:
-- Windows / Python / uv / Ollama / Docker 버전:
+- Windows / Python / uv / Ollama / pytest 버전:
 - CPU / GPU 정확한 이름 / VRAM / RAM:
-- Docker 이미지 ID / Linux 컨테이너 여부:
+- Python 평가기 backend / runner 해시 / 실행 제한 시간:
 - 컨텍스트·출력 한도·temperature·seed·시간 제한:
 - 모델 순서 / CPU·GPU 적재 상태:
 

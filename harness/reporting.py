@@ -2,7 +2,7 @@
 
 Manifest v1 uses the core models/cases/repeats plan. Optional provenance keys:
 participant, created_utc, source_commit, source_dirty, device_label, environment,
-model_sources={tag: {model_card_url, license_url}}, options, evaluator.image_id.
+model_sources={tag: {model_card_url, license_url}}, options, evaluator backend/version/runner_hash metadata.
 summary.json preserves core.summarize's model-keyed schema, adding completeness.
 """
 import html
@@ -16,7 +16,7 @@ import subprocess
 from .core import CASE_IDS, atomic_write, summarize, write_json
 
 CALL_ERRORS = {"call_http_error", "call_transport_error", "call_invalid_json", "call_api_error", "call_incomplete_response"}
-INFRA = CALL_ERRORS | {"docker_error", "evaluator_error"}
+INFRA = CALL_ERRORS | {"evaluator_error"}
 STATUSES = INFRA | {"solved", "test_failure", "extraction_failure", "timeout", "missing_response", "invalid_response_encoding"}
 METRICS = ("elapsed_seconds", "load_duration_seconds", "tokens_per_second", "vram_mib")
 
@@ -174,6 +174,12 @@ def _environment_lines(env):
     return lines
 
 
+EXECUTION_WARNING = ("Generated code runs as the current user with filesystem and network access. "
+                     "A temporary directory, Python -I, and a subprocess wall-time limit are not security isolation. "
+                     "No RAM, CPU, network, or filesystem isolation is provided. "
+                     "Hidden tests and runner output are not protected against adversarial code.")
+
+
 NOTES = """# 팀 해석 (사람이 작성)
 
 자동 수치·케이스별 증거: [REPORT.md](REPORT.md). 아래 항목은 팀이 직접 작성합니다.
@@ -182,6 +188,7 @@ NOTES = """# 팀 해석 (사람이 작성)
 - 장치 및 동일 PC 여부: 미완료
 - 발견 1 (성공/실패, case ID, REPORT.md의 해당 케이스/증거 링크, 해석): 미완료
 - 발견 2 (성공/실패, case ID, REPORT.md의 해당 케이스/증거 링크, 해석): 미완료
+- 실행 위험 확인: 생성 코드는 현재 사용자 권한으로 파일시스템과 네트워크에 접근합니다. 임시 디렉터리, Python -I, 시간 제한은 보안 격리가 아닙니다.
 - 최종 판단 및 한계: 미완료
 - API 키·개인정보·원문 로그 공개 전 점검: 미완료
 """
@@ -216,7 +223,7 @@ def write_report(run_dir: Path) -> Path:
         item["valid_for_comparison"] = item["complete"] and item["infra_errors"] == 0
     lines = ["# 실행 결과 (자동 생성)", "", "수치는 자동 계산입니다. 해석은 [NOTES.md](NOTES.md)에 사람이 작성해야 하며 이 보고서는 해석 완료를 주장하지 않습니다.", "",
              "서로 다른 PC 간 속도 비교는 의미가 없습니다. 공식 두 모델 동일 PC 비교와 클라우드 5×1 실험은 별도 팀 의무입니다.",
-             "결과는 results/<participant>/<run-id> 아래 Git 추적 대상으로 보관합니다. 원문 공개 전 키·개인정보를 확인하세요.", "", "## 실행 정보"]
+             "결과는 results/<participant>/<run-id> 아래 Git 추적 대상으로 보관합니다. 원문 공개 전 키·개인정보를 확인하세요.", "", "## 실행 정보", "", "Execution warning: " + EXECUTION_WARNING]
     for key in ("participant", "created_utc", "source_commit", "source_dirty", "device_label", "command", "run_status"):
         lines.append("- %s: %s" % (key, _esc(manifest.get(key))))
     if manifest.get("source_dirty") is True:
@@ -239,8 +246,8 @@ def write_report(run_dir: Path) -> Path:
         lines.append("- %s: %s" % (key, _esc(options.get(key))))
     for key in ("repeat_seeds", "retry_policy", "order", "history", "generation_api", "cloud_controls"):
         lines.append("- %s: %s" % (key, _esc(manifest.get(key))))
-    for key in ("image", "image_id", "wall_timeout", "memory", "cpus", "pids"):
-        lines.append("- Docker/evaluator %s: %s" % (key, _esc(evaluator.get(key))))
+    for key in ("backend", "python_version", "pytest_version", "runner_hash", "wall_timeout"):
+        lines.append("- Python evaluator %s: %s" % (key, _esc(evaluator.get(key))))
     lines += ["", "### 실행 시 환경"] + _environment_lines(manifest.get("environment"))
     complete = all(item["complete"] for item in summary.values())
     infra = sum(item["infra_errors"] for item in summary.values())

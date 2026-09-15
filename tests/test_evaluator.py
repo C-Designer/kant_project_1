@@ -1,8 +1,15 @@
+"""Only authored benign solutions are executed by these evaluator tests."""
 import json
+import os
+from pathlib import Path
 import subprocess
+import sys
+import time
 from types import SimpleNamespace
+
 import pytest
-from harness.evaluator import PREFIX, docker_command, evaluate, parse_report
+from harness import evaluator
+from harness.evaluator import PREFIX, evaluate, parse_report, python_preflight
 
 
 def report(exit_code=0, public='passed', hidden='passed'):
@@ -26,69 +33,167 @@ def test_bad_report(text, code):
         parse_report(text, code)
 
 
-def test_isolation_flags():
-    command = docker_command('known-name', '/tmp/input', 'kant-harness:1')
-    for token in ['--network', 'none', '--read-only', '--cap-drop', 'ALL', '--security-opt',
-                  'no-new-privileges', '--pids-limit', '--memory', '--memory-swap', '--cpus',
-                  '--user', '65532:65532', '--tmpfs', '--rm']:
-        assert token in command
-    assert 'type=bind,src=/tmp/input,dst=/work,readonly' in command
-    assert not any('docker.sock' in x for x in command)
-    assert command[-2:] == ['-I', '/opt/harness/docker_runner.py']
+@pytest.mark.parametrize('mutation', ['duplicate', 'unexpected_file', 'bad_outcome', 'bad_errors'])
+def test_report_integrity(mutation):
+    data = json.loads(report()[len(PREFIX):])
+    if mutation == 'duplicate':
+        data['tests'].append(data['tests'][0])
+    elif mutation == 'unexpected_file':
+        data['tests'][0]['nodeid'] = 'other.py::test_one'
+    elif mutation == 'bad_outcome':
+        data['tests'][0]['outcome'] = 'unknown'
+    else:
+        data['collection_errors'] = [123]
+    with pytest.raises(ValueError):
+        parse_report(PREFIX + json.dumps(data), 0)
 
 
-def test_timeout_cleans_known_container(monkeypatch, tmp_path):
-    for name in ['test_public.py', 'test_hidden.py']:
-        (tmp_path / name).write_text('def test_one(): assert True\n')
-    commands = []
-    def fake_run(command, **kwargs):
-        commands.append(command)
-        if command[1] == 'run':
-            mount = command[command.index('--mount') + 1]
-            assert 'readonly' in mount
-            raise subprocess.TimeoutExpired(command, 1)
-        return SimpleNamespace(returncode=0, stdout=b'')
-    monkeypatch.setattr('harness.evaluator.subprocess.run', fake_run)
-    monkeypatch.setattr('harness.evaluator.run_bounded', lambda command, capture, timeout: fake_run(command))
-    result = evaluate('raise RuntimeError("must not run on host")', tmp_path, wall_timeout=1)
-    assert result['status'] == 'timeout'
-    assert commands[-1] == ['docker', 'rm', '-f', result['container']]
+@pytest.fixture
+def small_case(tmp_path):
+    for filename, arg, expected in [('test_public.py', 2, 3), ('test_hidden.py', -4, -3)]:
+        (tmp_path / filename).write_text(
+            f'from solution import increment\ndef test_increment(): assert increment({arg}) == {expected}\n')
+    return tmp_path
 
 
-def test_docker_missing(monkeypatch, tmp_path):
-    for name in ['test_public.py', 'test_hidden.py']:
-        (tmp_path / name).write_text('')
-    def missing(*args, **kwargs):
-        raise FileNotFoundError('docker not available')
-    monkeypatch.setattr('harness.evaluator.subprocess.run', missing)
-    monkeypatch.setattr('harness.evaluator.run_bounded', missing)
-    assert evaluate('pass', tmp_path)['status'] == 'docker_error'
+def test_actual_solution_pass_and_failure(small_case):
+    good = evaluate('def increment(x): return x + 1\n', small_case)
+    bad = evaluate('def increment(x): return x - 1\n', small_case)
+    assert good['status'] == 'solved', good
+    assert good['process_exit_code'] == 0
+    assert good['groups']['public']['passed'] == good['groups']['hidden']['passed'] == 1
+    assert good['test_count'] == 2
+    assert good['collection_errors'] == []
+    assert good['evaluation_elapsed_seconds'] > 0
+    assert bad['status'] == 'test_failure', bad
+    assert bad['process_exit_code'] == 1
+    assert bad['groups']['public']['failed'] == bad['groups']['hidden']['failed'] == 1
 
 
-def test_preflight_checks_daemon_and_image(monkeypatch):
-    from harness.evaluator import docker_preflight
-    calls = []
+def test_collection_error(small_case):
+    result = evaluate('raise ValueError("authored collection error")\n', small_case)
+    assert result['status'] == 'test_failure'
+    assert len(result['collection_errors']) == 2
+    assert not result['all_pass']
+
+
+def test_preflight_real():
+    metadata = python_preflight()
+    assert metadata['backend'] == 'python-subprocess'
+    assert metadata['python_version'].startswith('3.12.')
+    assert metadata['pytest_version']
+    assert len(metadata['runner_sha256']) == 64
+    assert str(Path.home()) not in json.dumps(metadata)
+    assert sys.executable not in json.dumps(metadata)
+
+
+def test_preflight_uses_current_interpreter(monkeypatch):
     def run(command, **kwargs):
-        calls.append(command)
+        assert command[:3] == [sys.executable, '-I', '-c']
+        assert 'pytest' in command[-1]
         assert kwargs['timeout'] == 15
-        return SimpleNamespace(returncode=0, stdout='27.5.1\n' if command[1] == 'version'
-                               else 'sha256:' + 'b' * 64 + '\n', stderr='')
-    monkeypatch.setattr('harness.evaluator.subprocess.run', run)
-    metadata = docker_preflight('custom:1')
-    assert metadata == {'docker_server_version': '27.5.1', 'image_id': 'sha256:' + 'b' * 64,
-                        'requested_image': 'custom:1'}
-    assert calls == [['docker', 'version', '--format', '{{.Server.Version}}'],
-                     ['docker', 'image', 'inspect', '--format', '{{.Id}}', 'custom:1']]
+        assert kwargs['env']['PYTEST_DISABLE_PLUGIN_AUTOLOAD'] == '1'
+        assert not kwargs.get('shell', False)
+        return SimpleNamespace(returncode=0, stdout=json.dumps({
+            'python_version': '3.12.9', 'pytest_version': '8.3.5'}))
+    monkeypatch.setattr(evaluator.subprocess, 'run', run)
+    assert python_preflight()['python_version'] == '3.12.9'
 
 
-@pytest.mark.parametrize('version,image_id', [('', 'sha256:' + 'a' * 64),
-                                             ('<no value>', 'sha256:' + 'a' * 64),
-                                             ('27.5.1', ''), ('27.5.1', 'not-an-image-id')])
-def test_preflight_rejects_invalid_metadata(monkeypatch, version, image_id):
-    from harness.evaluator import docker_preflight
-    def run(command, **kwargs):
-        return SimpleNamespace(returncode=0, stdout=version if command[1] == 'version' else image_id,
-                               stderr='')
-    monkeypatch.setattr('harness.evaluator.subprocess.run', run)
-    with pytest.raises(ValueError, match='Docker preflight failed'):
-        docker_preflight('custom:1')
+@pytest.mark.parametrize('failure', ['missing_pytest', 'missing_python', 'timeout', 'invalid'])
+def test_preflight_failure(monkeypatch, failure):
+    def run(*args, **kwargs):
+        if failure == 'missing_python':
+            raise FileNotFoundError('private path')
+        if failure == 'timeout':
+            raise subprocess.TimeoutExpired('python', 15)
+        if failure == 'invalid':
+            return SimpleNamespace(returncode=0, stdout='{}')
+        return SimpleNamespace(returncode=1, stdout='', stderr='No module named pytest')
+    monkeypatch.setattr(evaluator.subprocess, 'run', run)
+    with pytest.raises(ValueError, match='Python preflight failed'):
+        python_preflight()
+
+
+def test_command_environment_and_only_copied_inputs(monkeypatch, small_case):
+    for name in ('OPENAI_API_KEY', 'AWS_SECRET_ACCESS_KEY', 'PYTHONPATH', 'PYTEST_ADDOPTS',
+                 'PYTEST_PLUGINS', 'HTTP_PROXY', 'HOME', 'PATH'):
+        monkeypatch.setenv(name, 'must-not-leak')
+    (small_case / 'conftest.py').write_text('raise RuntimeError("must not be copied")')
+    (small_case / 'reference.py').write_text('raise RuntimeError("must not be copied")')
+    actual = evaluator.subprocess.Popen
+    workdirs = []
+    def popen(command, **kwargs):
+        assert command == [sys.executable, '-I', '-B', str(evaluator.RUNNER)]
+        assert not kwargs.get('shell', False)
+        env = kwargs['env']
+        assert 'must-not-leak' not in env.values()
+        assert env['PYTEST_DISABLE_PLUGIN_AUTOLOAD'] == '1'
+        assert kwargs['stdin'] == subprocess.DEVNULL
+        if os.name == 'posix':
+            assert kwargs['start_new_session'] is True
+        work = Path(kwargs['cwd'])
+        workdirs.append(work)
+        assert {p.name for p in work.iterdir()} == {'solution.py', 'test_public.py', 'test_hidden.py'}
+        return actual(command, **kwargs)
+    monkeypatch.setattr(evaluator.subprocess, 'Popen', popen)
+    result = evaluate('def increment(x): return x + 1\n', small_case)
+    assert result['status'] == 'solved', result
+    assert all(not work.exists() for work in workdirs)
+
+
+@pytest.mark.parametrize('timeout', [0, -1, float('inf'), float('nan'), True])
+def test_invalid_timeout(small_case, timeout):
+    assert evaluate('pass', small_case, wall_timeout=timeout)['status'] == 'evaluator_error'
+
+
+def test_actual_timeout_captured_and_cleaned(monkeypatch, small_case):
+    actual = evaluator.subprocess.Popen
+    workdirs = []
+    def popen(command, **kwargs):
+        workdirs.append(Path(kwargs['cwd']))
+        return actual(command, **kwargs)
+    monkeypatch.setattr(evaluator.subprocess, 'Popen', popen)
+    log = small_case / 'timeout.log'
+    started = time.monotonic()
+    result = evaluate('import os,time\nos.write(1,b"authored timeout marker\\n")\ntime.sleep(30)\n',
+                      small_case, wall_timeout=0.8, log_path=log)
+    assert result['status'] == 'timeout', result
+    assert result['process_exit_code'] is not None
+    assert time.monotonic() - started < 5
+    assert 'authored timeout marker' in log.read_text()
+    assert all(not work.exists() for work in workdirs)
+
+
+@pytest.mark.skipif(os.name != 'posix', reason='POSIX process group runtime validation')
+@pytest.mark.parametrize('timeout', [True, False])
+def test_child_process_cleanup(small_case, timeout):
+    # Benign delayed marker proves the child did not survive either parent outcome.
+    marker = small_case / 'child-survived'
+    child = f'import time,pathlib; time.sleep(1.5); pathlib.Path({str(marker)!r}).touch()'
+    code = ('import subprocess,sys,time\n'
+            f'subprocess.Popen([sys.executable,"-I","-c",{child!r}])\n'
+            + ('time.sleep(30)\n' if timeout else '')
+            + 'def increment(x): return x+1\n')
+    result = evaluate(code, small_case, wall_timeout=0.7 if timeout else 5)
+    assert result['status'] == ('timeout' if timeout else 'solved'), result
+    time.sleep(1.6)
+    assert not marker.exists()
+
+
+def test_output_is_bounded(small_case):
+    log = small_case / 'output.log'
+    result = evaluate('import os\nos.write(1,b"x"*3000000)\ndef increment(x): return x+1\n',
+                      small_case, log_path=log)
+    assert result['status'] == 'solved', result
+    assert log.stat().st_size <= evaluator.OUTPUT_LIMIT
+    assert log.read_text().rstrip().splitlines()[-1].startswith(PREFIX)
+
+
+def test_launch_failure_is_evaluator_error(monkeypatch, small_case):
+    def missing(*args, **kwargs):
+        raise FileNotFoundError('private location')
+    monkeypatch.setattr(evaluator.subprocess, 'Popen', missing)
+    result = evaluate('pass', small_case)
+    assert result['status'] == 'evaluator_error'
+    assert 'private location' not in json.dumps(result)

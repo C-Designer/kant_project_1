@@ -1,3 +1,4 @@
+import html
 import json
 import subprocess
 
@@ -12,7 +13,8 @@ def fixture_run(tmp_path, models=None, records=()):
                 "repeats": 2, "planned_per_model": 20, "participant": "synthetic",
                 "created_utc": "2026-01-01T00:00:00Z", "source_commit": "abc123", "source_dirty": True,
                 "device_label": "test PC", "command": "run", "options": {"seed": 42},
-                "evaluator": {"image_id": "sha256:test"}}
+                "evaluator": {"backend": "python-subprocess", "python_version": "3.12.test",
+                              "pytest_version": "8.test", "runner_hash": "sha256:test", "wall_timeout": 30.0}}
     (tmp_path / "manifest.json").write_text(json.dumps(manifest))
     if records:
         save_rows(tmp_path, records)
@@ -54,6 +56,11 @@ def test_twenty_planned_solved(tmp_path):
     assert "20/20" in text and "10/10" in text
     assert all(case in text for case in CASE_IDS)
     assert "sha256:test" in text
+    assert "Python evaluator backend: python-subprocess" in html.unescape(text)
+    assert "3.12.test" in html.unescape(text) and "8.test" in html.unescape(text)
+    assert "wall_timeout: 30.0" in html.unescape(text)
+    assert "current user with filesystem and network access" in text
+    assert "not security isolation" in text
 
 
 def test_failure_and_success_denominators(tmp_path):
@@ -61,7 +68,7 @@ def test_failure_and_success_denominators(tmp_path):
         row(metrics={"elapsed_seconds": 2, "tokens_per_second": 10, "load_duration_seconds": 0, "vram_mib": 0}),
         row(repeat=2, status="extraction_failure", metrics={"elapsed_seconds": 4}),
         row("B02", status="call_transport_error", metrics={"elapsed_seconds": 100}),
-        row("B02", 2, "docker_error"), row("B03", 1, "missing_response")])
+        row("B02", 2, "evaluator_error"), row("B03", 1, "missing_response")])
     write_report(tmp_path)
     data = summary(tmp_path)
     assert data["call_successes"] == 3 and data["call_attempts"] == 5

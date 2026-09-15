@@ -47,9 +47,7 @@ try {
         throw 'Output already exists. Use a new RunId; previous results will not be overwritten.'
     }
     $null = Get-Command uv -ErrorAction Stop
-    $null = Get-Command docker -ErrorAction Stop
     Invoke-Checked 'uv' @('sync', '--frozen')
-    Invoke-Checked 'docker' @('build', '-t', 'kant-harness:1', '.')
     Invoke-Checked 'uv' @('run', 'python', '-m', 'harness', 'verify-cases', '--out', $VerifyDir)
     $Verification = Get-Content -LiteralPath "$VerifyDir/verification_summary.json" -Raw | ConvertFrom-Json
     if ($Verification.all_valid -ne $true) {

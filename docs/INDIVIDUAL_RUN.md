@@ -11,7 +11,7 @@
 - Cloud 5문제 × 각 1회는 팀 전체에서 한 번 수행합니다. 개인별 20회만 모았다고 과제 전체가 완료되는 것은 아닙니다.
 
 ## 2. 준비: 처음 한 번
-Windows PowerShell, 저장소 루트에서 실행합니다. Git·uv·Ollama·Docker Desktop(Linux 컨테이너)이 필요합니다. 사전 설치와 장비 정책 확인은 별도입니다.
+Windows PowerShell, 저장소 루트에서 실행합니다. Git·uv·Ollama이 필요합니다. 사전 설치와 장비 정책 확인은 별도입니다.
 
 ```powershell
 git switch main
@@ -36,7 +36,7 @@ if ($LASTEXITCODE -ne 0) { throw "모델 다운로드 실패" }
 .\scripts\run-personal.ps1 -Participant $Me -Model $Model -DeviceLabel "classroom-pc-01"
 ```
 
-스크립트는 저장소 루트에서 의존성 준비 → Docker 이미지 빌드 → 10문제 정답/버그 사전 검증 → 개인 모델 20회 실행을 진행합니다. 설치 정책으로 스크립트 실행이 막히면 보안 정책을 자동 변경하지 말고 아래 수동 명령을 사용합니다. Docker가 없거나 검증에 실패하면 본 실험을 시작하지 않습니다.
+스크립트는 저장소 루트에서 의존성 준비 → Python 평가기로 10문제 정답/버그 사전 검증 → 개인 모델 20회 실행을 진행합니다. 설치 정책으로 스크립트 실행이 막히면 보안 정책을 자동 변경하지 말고 아래 수동 명령을 사용합니다. Python 평가기 준비 또는 사전 검증에 실패하면 본 실험을 시작하지 않습니다.
 
 종료 시 개인 결과 경로가 표시됩니다:
 
@@ -68,8 +68,6 @@ $RunDir = "results/$Me/$RunId"
 
 uv sync --frozen
 if ($LASTEXITCODE -ne 0) { throw "의존성 준비 실패" }
-docker build -t kant-harness:1 .
-if ($LASTEXITCODE -ne 0) { throw "Docker 빌드 실패" }
 uv run python -m harness verify-cases --out "runs/verify-$Me-$RunId"
 if ($LASTEXITCODE -ne 0) { throw "사전 검증 실패: 본 실험 중단" }
 uv run python -m harness run-model --participant $Me --model $Model --run-id $RunId --device-label "classroom-pc-01"
@@ -82,7 +80,7 @@ if ($LASTEXITCODE -ne 0) { throw "실행 중단: 생성된 보고서 상태 확�
 - REPORT.md: 해결 수, 호출 성공 수, 미실행 수, 문제별 두 반복 결과, 응답/로딩 시간·tokens/s·VRAM과 표본 수 n, 환경·설정·근거 링크를 자동 작성합니다.
 - NOTES.md: 모델 선택 이유와 라이선스 확인, 대표 성공/실패 사례, 결과 해석, 한계, 민감 정보 검토를 사람이 작성합니다.
 - 정답 구현 테스트의 100/100과 LLM의 20회 성적은 서로 다른 값입니다.
-- 20회 기록이 있다고 20회 성공한 것은 아닙니다. 호출 실패·형식 오류·테스트 실패·Docker 오류를 구분하고, 중단된 결과는 미완료로 표시합니다.
+- 20회 기록이 있다고 20회 성공한 것은 아닙니다. 호출 실패·형식 오류·테스트 실패·평가기 실행 오류를 구분하고, 중단된 결과는 미완료로 표시합니다.
 - 기존 NOTES.md는 보고서를 재생성해도 덮어쓰지 않습니다.
 
 ```powershell
@@ -90,11 +88,11 @@ if ($LASTEXITCODE -ne 0) { throw "실행 중단: 생성된 보고서 상태 확�
 $RunDir = "results/your-github-id/실제-run-id"
 notepad "$RunDir/NOTES.md"
 
-# 필요할 때 숫자 보고서 재생성. 모델/Docker 재실행은 하지 않습니다.
+# 필요할 때 숫자 보고서 재생성. 모델/테스트 재실행은 하지 않습니다.
 uv run python -m harness report $RunDir
 ```
 
-생성된 solution.py를 호스트에서 실행하지 마세요. Docker는 적대적 Python의 완전한 보안 경계가 아닙니다. 민감 파일 없는 실습 장비를 사용합니다.
+생성된 solution.py는 평가기가 현재 사용자 권한의 별도 Python 프로세스에서 실행합니다. 임시 폴더와 시간 제한은 파일·네트워크 접근을 막지 않습니다. 민감 파일 없는 실습 장비에서 실행하세요.
 
 ## 5. 본인 결과만 commit/push
 키·토큰·개인정보가 원문·로그·노트에 없는지 확인한 후 수행합니다. NOTES.md 작성과 REPORT.md 검토를 끝내고, **git add . 대신 본인 실행 폴더만** 추가합니다.
@@ -136,4 +134,4 @@ results 폴더는 Git 추적 대상입니다. runs 폴더는 사전 검증·기�
 ## 팀 완료 체크
 - 개인: 20회 실행 상태 확인 + REPORT.md + 작성된 NOTES.md + 근거 파일 + push.
 - 팀: 서로 다른 로컬 2모델, 동일 PC 기준 비교, Cloud 5회, 참여 기록, 최종 모델 선정·한계 정리.
-- 현재 패키지는 단위/모의 검증까지이며 실제 Windows/Docker/Ollama 장비 테스트는 팀에서 수행해야 합니다.
+- 현재 패키지는 단위/모의 검증까지이며 실제 Windows/Ollama 장비 테스트는 팀에서 수행해야 합니다.

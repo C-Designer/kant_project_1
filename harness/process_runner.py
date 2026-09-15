@@ -1,10 +1,11 @@
-"""Trusted image entrypoint, never executed on the host by the harness.
+"""Fixed local pytest entrypoint. Not a sandbox or tamper-proof judge.
 
-This is resource isolation, NOT a sandbox secure against adversarial Python.
-Generated Python shares an interpreter with pytest and can see mounted tests.
+Candidate code shares pytest's interpreter and can access the filesystem/network.
 """
 import json
 import sys
+import os
+from pathlib import Path
 import pytest
 
 PREFIX = "HARNESS_PYTEST_RESULT="
@@ -28,11 +29,13 @@ class Results:
 
 
 def main():
-    sys.path.insert(0, "/work")
+    sys.path.insert(0, os.getcwd())
+    os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
     plugin = Results()
-    exit_code = int(pytest.main(["-q", "-c", "/opt/harness/pytest.ini", "--import-mode=importlib",
+    exit_code = int(pytest.main(["-q", "-s", "--rootdir", os.getcwd(), "-c", str(Path(__file__).with_name("pytest.ini")), "--import-mode=importlib",
                                 "-p", "no:cacheprovider", "--tb=short",
-                                "/work/test_public.py", "/work/test_hidden.py"], plugins=[plugin]))
+                                "--confcutdir", os.getcwd(), "--noconftest",
+                                "test_public.py", "test_hidden.py"], plugins=[plugin]))
     payload = {"version": 1, "exit_code": exit_code, "tests": list(plugin.tests.values()),
                "collection_errors": plugin.collection_errors}
     print("\n" + PREFIX + json.dumps(payload, sort_keys=True), flush=True)

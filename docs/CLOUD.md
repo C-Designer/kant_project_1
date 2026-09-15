@@ -24,7 +24,7 @@ uv run python -m harness export-cloud --out runs/cloud-prompts
 
 추정 비용에는 입력·출력 단가, 통화, 단가 기준일과 출처를 함께 적습니다. 실제 청구 내역과는 구분합니다. API 키·요청 Authorization 헤더·인증 정보는 저장소와 로그에 포함하지 않습니다.
 
-## 3. 동일 Docker 테스트로 평가
+## 3. 동일 Python 테스트로 평가
 ```powershell
 uv run python -m harness import-cloud --bundle runs/cloud-prompts --responses runs/cloud-responses --model "PROVIDER/EXACT-MODEL-ID" --out runs/cloud-001
 uv run python -m harness summarize runs/cloud-001

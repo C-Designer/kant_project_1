@@ -141,7 +141,7 @@ def summarize(records, models, ids=CASE_IDS, repeats=2):
                          "mean_tokens_per_second": sum(speeds) / len(speeds) if speeds else None,
                          "total_call_elapsed_seconds": sum(elapsed) if elapsed else None}
         item = result[model]
-        call_success_statuses = {"solved", "test_failure", "extraction_failure", "timeout", "docker_error", "evaluator_error"}
+        call_success_statuses = {"solved", "test_failure", "extraction_failure", "timeout", "evaluator_error"}
         successes = [r for r in rows if r.get("status") in call_success_statuses]
         item["call_successes"] = len(successes)
         item["call_attempts"] = len(rows)

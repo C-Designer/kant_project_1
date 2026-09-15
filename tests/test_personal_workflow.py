@@ -1,4 +1,5 @@
 """Mocked end-to-end personal workflow; never calls a model or executes a solution."""
+import html
 import json
 from pathlib import Path
 
@@ -11,7 +12,7 @@ def test_personal_run_report_notes_and_separate_participants(tmp_path, monkeypat
     calls = []
     monkeypatch.setattr(cli, 'capture_environment', lambda: {'python_version': '3.12.test'})
     monkeypatch.setattr(cli, 'source_state', lambda: {'source_commit': 'a' * 40, 'source_dirty': False})
-    monkeypatch.setattr(cli, 'docker_preflight', lambda image: {'image_id': 'sha256:' + '0' * 64, 'docker_server_version': 'mock'})
+    monkeypatch.setattr(cli, 'python_preflight', lambda: {'backend': 'python-subprocess', 'python_version': '3.12.test', 'pytest_version': '8.test'})
 
     class FakeOllama:
         def __init__(self, url, timeout):
@@ -56,6 +57,8 @@ def test_personal_run_report_notes_and_separate_participants(tmp_path, monkeypat
         summary = json.loads((run / 'summary.json').read_text())['synthetic:1']
         assert summary['solved'] == 20 and summary['complete']
         report = (run / 'REPORT.md').read_text()
+        assert 'Python evaluator backend: python-subprocess' in html.unescape(report)
+        assert 'current user with filesystem and network access' in report
         assert '20/20' in report and 'model-1/B01-r1.raw.json' in report
         assert 'model-1/B10-r2.pytest.log' in report
         (run / 'NOTES.md').write_text('Human interpretation must survive regeneration.\n')

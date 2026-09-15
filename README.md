@@ -10,7 +10,7 @@
 - [Cloud API 비교 방법](docs/CLOUD.md)
 
 ## 가장 빠른 개인 실행 흐름
-Windows PowerShell 예시입니다. Git·uv·Ollama·Docker Desktop(Linux 컨테이너)이 설치되어 있어야 합니다. 모델 태그와 본인 ID는 직접 정합니다.
+Windows PowerShell 예시입니다. Git·uv·Ollama이 설치되어 있어야 합니다. 모델 태그와 본인 ID는 직접 정합니다.
 
 ```powershell
 git switch main
@@ -24,7 +24,7 @@ if ($LASTEXITCODE -ne 0) { throw "모델 다운로드 실패" }
 .\scripts\run-personal.ps1 -Participant $Me -Model $Model -DeviceLabel "classroom-pc-01"
 ```
 
-스크립트는 환경 준비·Docker 빌드·정답/버그 사전 검증 후 **모델 하나 × 10문제 × 2회**를 실행합니다. 결과는 `results/<본인ID>/<실행ID>/`에 자동 저장됩니다.
+스크립트는 환경 준비·Python 정답/버그 사전 검증 후 **모델 하나 × 10문제 × 2회**를 실행합니다. 결과는 `results/<본인ID>/<실행ID>/`에 자동 저장됩니다.
 
 - `REPORT.md`: 숫자·문제별 결과·환경·근거를 자동 작성
 - `NOTES.md`: 모델 선택 이유·실패 사례·해석·민감 정보 확인을 팀원이 작성
@@ -32,16 +32,16 @@ if ($LASTEXITCODE -ne 0) { throw "모델 다운로드 실패" }
 - 검토 후 **본인 실행 폴더만** `git add`, commit, 최신 main 반영, push
 - 스크립트는 git commit/push나 보안 정책 변경을 자동 실행하지 않음
 
-스크립트 사용이 어려우면 [수동 CLI와 정확한 push 명령](docs/INDIVIDUAL_RUN.md)을 따릅니다. PowerShell 스크립트와 실제 Docker/Ollama 실행은 수업 장비에서 확인해야 합니다.
+스크립트 사용이 어려우면 [수동 CLI와 정확한 push 명령](docs/INDIVIDUAL_RUN.md)을 따릅니다. PowerShell 스크립트와 실제 Ollama 실행은 수업 장비에서 확인해야 합니다.
 
 ## 팀원이 먼저 할 일
 1. 한 문제의 `prompt.md → starter.py → test_public.py`를 읽습니다.
 2. 사람이 기준을 검토할 때만 `test_hidden.py`와 `reference.py`를 봅니다. 이 둘은 모델 입력에서 제외합니다.
-3. Windows 수업 노트북의 GPU·VRAM·RAM, Ollama 및 Docker Linux 컨테이너 작동을 확인합니다.
-4. Docker 검증으로 정답은 모두 통과하고 초기 코드에서는 버그가 잡히는지 확인합니다.
+3. Windows 수업 노트북의 GPU·VRAM·RAM, Ollama 및 Python 평가기 작동을 확인합니다.
+4. Python 평가기로 정답은 모두 통과하고 초기 코드에서는 버그가 잡히는지 확인합니다.
 5. 팀에서 서로 다른 모델을 배정하고, 각자는 담당 모델의 Model Card·License·전체 태그를 기록합니다. 모두 같은 문제·생성 설정을 사용합니다. 공정한 속도 비교와 발제문 기본 요건을 위해 공통 평가 PC에서 각자 실행하는 방식을 권장합니다.
 
-**아직 모델 성능 결과는 없습니다.** 노트북 사양·모델 후보·Docker 실장비 실행·팀 역할은 확인해야 합니다. 2060 계열 GPU는 사용자 기억이며 확정 사양이 아닙니다.
+**아직 모델 성능 결과는 없습니다.** 노트북 사양·모델 후보·실장비 실행·팀 역할은 확인해야 합니다. 2060 계열 GPU는 사용자 기억이며 확정 사양이 아닙니다.
 
 ## 10문제: 실제 코드와 테스트
 | ID | 주제 | 핵심 검증 | 코드 |
@@ -60,20 +60,18 @@ if ($LASTEXITCODE -ne 0) { throw "모델 다운로드 실패" }
 각 폴더에는 `prompt.md`, `starter.py`, `reference.py`, `test_public.py`, `test_hidden.py`가 있습니다. 정확한 API·허용 입력·오류·변경 규칙은 **각 prompt.md가 기준**입니다. 이전 Notion 한 줄 후보나 대화의 예시 함수와 세부 API가 다를 수 있습니다. 난이도는 설계상 구분이지 실측 결과가 아닙니다.
 
 ## 설치 및 사전 검증
-저장소 루트의 Windows PowerShell 명령입니다. Git·uv·Ollama·Docker Desktop(Linux 컨테이너)이 필요합니다. Docker 설치·권한 변경은 팀 장비 정책에 맞게 진행합니다.
+저장소 루트의 Windows PowerShell 명령입니다. Git·uv·Ollama이 필요합니다. 설치는 팀 장비 정책에 맞게 진행합니다.
 
 ```powershell
 git clone https://github.com/C-Designer/kant_project_1.git
 cd kant_project_1
 uv sync --frozen
 uv run python --version
-docker version
-docker build -t kant-harness:1 .
 uv run python -m pytest tests -q
 uv run python -m harness verify-cases --out runs/verify-001
 ```
 
-`runs/verify-001/verification_summary.json`의 `all_valid`가 true여야 합니다. 정답 10개가 모든 테스트를 통과하고 초기 코드 10개에서 평가 테스트 최소 1개가 실패해야 합니다. Docker 오류를 모델 오답으로 해석하지 마세요.
+`runs/verify-001/verification_summary.json`의 `all_valid`가 true여야 합니다. 정답 10개가 모든 테스트를 통과하고 초기 코드 10개에서 평가 테스트 최소 1개가 실패해야 합니다. 평가기 실행 오류를 모델 오답으로 해석하지 마세요.
 
 ## 선택: 한 사람이 두 모델을 연속 실행하는 기존 방식
 같은 PC에서 모델을 하나씩 실행합니다. 다른 모델이나 무거운 작업은 먼저 종료하고 모델 다운로드를 완료하세요. 아래 태그는 **교체용 자리표시자이지 추천 모델이 아닙니다.**
@@ -91,7 +89,7 @@ uv run python -m harness summarize runs/local-001
 
 실행 순서는 모델 → 문제 → 반복입니다. 모델당 워밍업 1회는 별도 기록하며 해당 모델 종료 후 unload합니다. 반복 seed는 42/43으로 동일 반복에 같은 seed를 적용합니다. 서로 다른 모델의 확률적 조건이 완전히 같다는 보장은 아닙니다.
 
-응답은 정확히 하나의 python 코드 블록이어야 합니다. 추출 실패는 형식 오류로 기록하고 수작업 보정하지 않습니다. 생성 코드는 Docker 밖에서 실행하지 않습니다.
+응답은 정확히 하나의 python 코드 블록이어야 합니다. 추출 실패는 형식 오류로 기록하고 수작업 보정하지 않습니다. 평가기는 생성 코드를 현재 Python의 별도 프로세스로 실행합니다.
 
 ## 결과 파일
 - `manifest.json`: 계획 실행 수·문제/프롬프트 해시·설정
@@ -114,6 +112,6 @@ uv run python -m harness summarize runs/local-001
 전체 테스트를 통과해야 해결입니다. 부분 통과는 진단 정보이며 테스트 개수로 문제 가중치를 달리하지 않습니다. 호출 실패·인프라 실패·미실행은 구분하고 작은 차이를 과장하지 않습니다.
 
 ## 보안과 공유
-Docker는 자원·네트워크 격리를 돕지만 적대적 Python을 완벽히 가두는 보안 경계는 아닙니다. 생성 코드가 테스트 파일이나 같은 Python 프로세스를 조사할 수 있어 악의적 채점 조작까지 검증하는 벤치마크는 아닙니다. 민감 파일 없는 실습 장비를 쓰고 Docker 소켓·호스트 홈·자격증명을 마운트하지 마세요.
+생성 코드는 현재 사용자 권한으로 실행되며 파일과 네트워크에 접근할 수 있습니다. 임시 폴더·별도 Python 프로세스·시간 제한은 보안 격리가 아닙니다. 민감 파일 없는 실습 장비에서 실행하고, 모델 응답이 테스트 실행을 조작할 수 있다는 한계도 고려하세요.
 
 저장소는 현재 **Private**입니다. 404가 보이는 팀원은 소유자와 협업자 초대·수락 상태를 확인하세요. 이번 작업에서는 공개 전환이나 협업자 권한 변경을 하지 않았습니다. Notion은 기존 공유 범위를 유지합니다.

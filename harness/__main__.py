@@ -1,5 +1,6 @@
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -11,14 +12,15 @@ import time
 
 from .core import (CASE_IDS, CLOUD_IDS, ExtractionError, append_jsonl, atomic_write,
                    build_prompt, case_path, extract_python, metrics, sha256, summarize, write_json)
-from .evaluator import docker_preflight, evaluate
+from .evaluator import python_preflight, evaluate
 from .ollama import CallFailure, Ollama
 from .reporting import capture_environment, write_report
 
-NOTICE = ("Resource isolation only, not an adversarially secure sandbox. Hidden tests are excluded "
-          "from prompts, but generated code can inspect the read-only test mount and shares pytest's "
-          "interpreter. Reports are produced by the fixed pytest runner and parsed by the host, "
-          "not read from model-written result files.")
+NOTICE = ("Generated code runs as the current user with filesystem and network access. "
+          "A temporary directory, Python -I, and a subprocess wall-time limit are not security isolation. "
+          "No RAM, CPU, network, or filesystem isolation is provided. Hidden tests are excluded "
+          "from prompts, but generated code can inspect them and shares pytest's interpreter. "
+          "Runner reports are not tamper-proof against adversarial code.")
 
 
 def positive_int(value):
@@ -40,12 +42,6 @@ def temperature(value):
     if not math.isfinite(number) or number < 0:
         raise argparse.ArgumentTypeError("must be nonnegative and finite")
     return number
-
-
-def memory_limit(value):
-    if not re.fullmatch(r"[1-9][0-9]*[kKmMgG]", value):
-        raise argparse.ArgumentTypeError("use a positive memory limit, e.g. 512m")
-    return value
 
 
 def full_tag(value):
@@ -98,11 +94,7 @@ def add_generation_args(local):
 
 
 def add_eval_args(parser):
-    parser.add_argument("--image", default="kant-harness:1")
     parser.add_argument("--wall-timeout", type=positive_float, default=30.0)
-    parser.add_argument("--memory", type=memory_limit, default="512m")
-    parser.add_argument("--cpus", type=positive_float, default=1.0)
-    parser.add_argument("--pids", type=positive_int, default=64)
 
 
 def parser():
@@ -137,7 +129,7 @@ def parser():
         add_eval_args(sub)
     summary = commands.add_parser("summarize")
     summary.add_argument("run_directory", type=Path)
-    report = commands.add_parser("report", help="regenerate report without model or Docker calls")
+    report = commands.add_parser("report", help="regenerate report without model calls or evaluator execution")
     report.add_argument("run_directory", type=Path)
     extraction = commands.add_parser("extract", help="extract code without importing or executing it")
     extraction.add_argument("raw_text", type=Path)
@@ -161,16 +153,22 @@ def start_run(args, ids, models, repeats, prompts):
                 "command": args.command, "models": models, "cases": list(ids), "repeats": repeats,
                 "planned_per_model": len(ids) * repeats, "suite_sha256": fingerprints,
                 "prompt_sha256": {case: sha256(text) for case, text in prompts.items()},
-                "sandbox_notice": NOTICE, "retry_policy": "none", "order": "model, case, repeat"}
-    if hasattr(args, "image"):
-        manifest["evaluator"] = {k: getattr(args, k) for k in ("image", "wall_timeout", "memory", "cpus", "pids")}
+                "execution_notice": NOTICE, "retry_policy": "none", "order": "model, case, repeat"}
+    if hasattr(args, "wall_timeout"):
+        manifest["evaluator"] = {**args.evaluator_metadata, "wall_timeout": args.wall_timeout}
     write_json(args.out / "manifest.json", manifest)
     return manifest
 
 
+def evaluator_preflight():
+    metadata = python_preflight()
+    return {**metadata, "backend": "python-subprocess",
+            "runner_hash": metadata.get("runner_sha256") or hashlib.sha256(
+                Path(__file__).with_name("process_runner.py").read_bytes()).hexdigest()}
+
+
 def eval_code(args, code, case, stem):
-    return evaluate(code, case_path(args.cases, case), image=getattr(args, "eval_image_id", args.image), wall_timeout=args.wall_timeout,
-                    memory=args.memory, cpus=args.cpus, pids=args.pids,
+    return evaluate(code, case_path(args.cases, case), wall_timeout=args.wall_timeout,
                     log_path=args.out / (stem + ".pytest.log"))
 
 
@@ -206,8 +204,7 @@ def run_local(args):
             args.out = args.results_root / args.participant / run_id
     elif len(set(args.models)) != 2:
         raise ValueError("two distinct model tags required")
-    docker_metadata = docker_preflight(args.image)
-    args.eval_image_id = docker_metadata["image_id"]
+    args.evaluator_metadata = evaluator_preflight()
     client = Ollama(args.url, args.call_timeout)
     prompts = {case: build_prompt(args.cases, case) for case in CASE_IDS}
     manifest = start_run(args, CASE_IDS, args.models, 2, prompts)
@@ -221,7 +218,6 @@ def run_local(args):
                                                   "provenance": "user supplied; unverified"}}
     manifest.update(run_status="in_progress", completed_attempts=0,
                     planned_attempts=len(args.models) * len(CASE_IDS) * 2)
-    manifest["evaluator"].update(docker_metadata)
     options = {"num_ctx": args.num_ctx, "num_predict": args.num_predict,
                "temperature": args.temperature, "seed": args.seed}
     manifest.update(options=options, repeat_seeds=[args.seed, args.seed + 1], endpoint=args.url,
@@ -292,6 +288,7 @@ def run_local(args):
 
 
 def verify_cases(args):
+    args.evaluator_metadata = evaluator_preflight()
     start_run(args, CASE_IDS, ["reference", "starter"], 1, {})
     good = True
     for case in CASE_IDS:
@@ -344,6 +341,7 @@ def import_cloud(args):
         exported = (args.bundle / (case + ".prompt.txt")).read_text(encoding="utf-8")
         if sha256(text) != bundle["prompt_sha256"].get(case) or text != exported:
             raise ValueError("prompt drift for " + case)
+    args.evaluator_metadata = evaluator_preflight()
     manifest = start_run(args, CLOUD_IDS, [args.model], repeats, prompts)
     manifest["cloud_controls"] = "manual independent first-response import; timing/tokens/sampling unverified"
     write_json(args.out / "manifest.json", manifest)
