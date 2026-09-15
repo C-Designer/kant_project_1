@@ -15,21 +15,22 @@ class ExtractionError(ValueError):
 
 
 def extract_python(text):
-    """Accept exactly one fenced block, labeled python, and no other fences."""
+    """Accept exactly one fenced code block (bare, ```python or ```py); surrounding prose is ignored."""
     if not isinstance(text, str):
         raise ExtractionError("response must be text")
     lines = text.splitlines(keepends=True)
     fences = [i for i, line in enumerate(lines) if re.match(r"^\s*(`{3,}|~{3,})", line)]
     if len(fences) != 2:
-        raise ExtractionError("expected exactly one fenced python block")
+        raise ExtractionError("expected exactly one fenced code block")
     start, end = fences
-    if lines[start].strip() != "```python" or lines[end].strip() != "```":
-        raise ExtractionError("use exact ```python and ``` fences")
-    if "".join(lines[:start]).strip() or "".join(lines[end + 1:]).strip():
-        raise ExtractionError("no explanation outside the python block")
+    opening = lines[start].strip()
+    closing = lines[end].strip()
+    if not (re.fullmatch(r"```(python|py)?", opening) and closing == "```") \
+            and not (re.fullmatch(r"~~~(python|py)?", opening) and closing == "~~~"):
+        raise ExtractionError("use a plain, ```python, or ```py fence with a matching bare closing fence")
     code = "".join(lines[start + 1:end])
     if not code.strip():
-        raise ExtractionError("empty python block")
+        raise ExtractionError("empty code block")
     return code if code.endswith("\n") else code + "\n"
 
 
