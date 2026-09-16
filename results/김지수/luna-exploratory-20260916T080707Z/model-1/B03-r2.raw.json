@@ -1,0 +1,99 @@
+{
+  "id": "resp_072495069b3aa344016aaa4e0ab9fc87d094b8bcf603b134d2",
+  "created_at": 1789545994.0,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": null,
+  "metadata": {},
+  "model": "gpt-5.6-luna",
+  "object": "response",
+  "output": [
+    {
+      "id": "msg_072495069b3aa344016aaa4e0b500487d093179d2686872316",
+      "content": [
+        {
+          "annotations": [],
+          "text": "```python\ndef validate_options(limit=None, offset=None, include_archived=None) -> dict:\n    if limit is None:\n        limit = 20\n    if offset is None:\n        offset = 0\n    if include_archived is None:\n        include_archived = False\n\n    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:\n        raise ValueError(\"limit must be an integer between 1 and 100\")\n\n    if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:\n        raise ValueError(\"offset must be a non-negative integer\")\n\n    if not isinstance(include_archived, bool):\n        raise ValueError(\"include_archived must be a boolean\")\n\n    return {\n        \"limit\": limit,\n        \"offset\": offset,\n        \"include_archived\": include_archived,\n    }\n```",
+          "type": "output_text",
+          "logprobs": []
+        }
+      ],
+      "role": "assistant",
+      "status": "completed",
+      "type": "message",
+      "phase": "final_answer"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "temperature": 1.0,
+  "tool_choice": "none",
+  "tools": [],
+  "top_p": 0.98,
+  "background": false,
+  "completed_at": 1789545996.0,
+  "conversation": null,
+  "max_output_tokens": 2048,
+  "max_tool_calls": null,
+  "moderation": null,
+  "previous_response_id": null,
+  "prompt": null,
+  "prompt_cache_diagnostics": null,
+  "prompt_cache_key": null,
+  "prompt_cache_options": null,
+  "prompt_cache_retention": "24h",
+  "reasoning": {
+    "context": "all_turns",
+    "effort": "none",
+    "generate_summary": null,
+    "mode": "standard",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "text": {
+    "format": {
+      "type": "text"
+    },
+    "verbosity": "medium"
+  },
+  "top_logprobs": 0,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 684,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 0
+    },
+    "output_tokens": 188,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 872
+  },
+  "user": null,
+  "billing": {
+    "payer": "developer"
+  },
+  "frequency_penalty": 0.0,
+  "presence_penalty": 0.0,
+  "store": false,
+  "tool_usage": {
+    "image_gen": {
+      "input_tokens": 0,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "total_tokens": 0
+    },
+    "web_search": {
+      "num_requests": 0
+    }
+  }
+}

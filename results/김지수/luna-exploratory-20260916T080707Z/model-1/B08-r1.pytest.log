@@ -1,0 +1,4 @@
+..........
+10 passed in 0.02s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 0, "tests": [{"nodeid": "test_public.py::test_normal", "outcome": "passed"}, {"nodeid": "test_public.py::test_existing_key", "outcome": "passed"}, {"nodeid": "test_public.py::test_independent_keys", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_before_retry", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_after_dedup", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_permanent_immediate", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_bounded_attempts", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_invalid_limit", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_generic_service_and_exception_identity", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_fake_contract", "outcome": "passed"}], "version": 1}
