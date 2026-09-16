@@ -1,0 +1,56 @@
+F..FFF...F                                                               [100%]
+================================== FAILURES ===================================
+__________________________________ test_name __________________________________
+test_public.py:7: in test_name
+    assert p["display_name"] == "Bob"
+E   AssertionError: assert 'Ada' == 'Bob'
+E     
+E     - Bob
+E     + Ada
+__________________________________ test_null __________________________________
+test_hidden.py:11: in test_null
+    assert update_profile(p, {"bio": None}) == {"display_name": "Ada", "bio": None, "alerts": True}
+E   AssertionError: assert {'alerts': Tr..._name': 'Ada'} == {'alerts': Tr..._name': 'Ada'}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Right contains 1 more item:
+E     {'bio': None}
+E     Use -v to get more diff
+_________________________________ test_false __________________________________
+test_hidden.py:18: in test_false
+    assert p == {"display_name": "Ada", "bio": "hello", "alerts": False}
+E   AssertionError: assert {'alerts': Tr..._name': 'Ada'} == {'alerts': Fa..._name': 'Ada'}
+E     
+E     Omitting 2 identical items, use -vv to show
+E     Differing items:
+E     {'alerts': True} != {'alerts': False}
+E     Use -v to get more diff
+_____________________________ test_empty_strings ______________________________
+test_hidden.py:24: in test_empty_strings
+    assert p == {"display_name": "", "bio": "", "alerts": True}
+E   AssertionError: assert {'alerts': Tr..._name': 'Ada'} == {'alerts': Tr...lay_name': ''}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'display_name': 'Ada'} != {'display_name': ''}
+E     {'bio': 'hello'} != {'bio': ''}
+E     Use -v to get more diff
+_____________________________ test_copy_and_patch _____________________________
+test_hidden.py:55: in test_copy_and_patch
+    assert p == {"display_name": "Ada", "bio": None, "alerts": False}
+E   AssertionError: assert {'alerts': Tr..._name': 'Ada'} == {'alerts': Fa..._name': 'Ada'}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'bio': 'hello'} != {'bio': None}
+E     {'alerts': True} != {'alerts': False}
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED test_public.py::test_name - AssertionError: assert 'Ada' == 'Bob'
+FAILED test_hidden.py::test_null - AssertionError: assert {'alerts': Tr..._na...
+FAILED test_hidden.py::test_false - AssertionError: assert {'alerts': Tr..._n...
+FAILED test_hidden.py::test_empty_strings - AssertionError: assert {'alerts':...
+FAILED test_hidden.py::test_copy_and_patch - AssertionError: assert {'alerts'...
+5 failed, 5 passed in 0.03s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_name", "outcome": "failed"}, {"nodeid": "test_public.py::test_empty", "outcome": "passed"}, {"nodeid": "test_public.py::test_multiple", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_null", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_false", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_empty_strings", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_unknown_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_name_null_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_alerts_null_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_copy_and_patch", "outcome": "failed"}], "version": 1}

@@ -1,0 +1,22 @@
+....FF....                                                               [100%]
+================================== FAILURES ===================================
+_______________________ test_offsets_cross_calendar_day _______________________
+test_hidden.py:12: in test_offsets_cross_calendar_day
+    assert select_window(values, start, end) == values[:2]
+E   assert [datetime.dat...timezone.utc)] == [datetime.dat...timezone.utc)]
+E     
+E     At index 0 diff: datetime.datetime(2026, 1, 1, 14, 59, 59, tzinfo=datetime.timezone.utc) != datetime.datetime(2025, 12, 31, 15, 0, tzinfo=datetime.timezone.utc)
+E     Use -v to get more diff
+________________ test_negative_offset_and_fractional_boundary _________________
+test_hidden.py:18: in test_negative_offset_and_fractional_boundary
+    assert select_window(values, start, end) == values[:2]
+E   assert [] == [datetime.dat...onds=68400)))]
+E     
+E     Right contains 2 more items, first extra item: datetime.datetime(2026, 2, 28, 19, 0, tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=68400)))
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED test_hidden.py::test_offsets_cross_calendar_day - assert [datetime.dat...
+FAILED test_hidden.py::test_negative_offset_and_fractional_boundary - assert ...
+2 failed, 8 passed in 0.04s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_half_open_utc", "outcome": "passed"}, {"nodeid": "test_public.py::test_empty_input", "outcome": "passed"}, {"nodeid": "test_public.py::test_naive_start", "outcome": "passed"}, {"nodeid": "test_public.py::test_reversed_window", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_offsets_cross_calendar_day", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_negative_offset_and_fractional_boundary", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_equal_instant_window", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_preserve_order_duplicates_timezone_and_input", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_naive_end_or_item_even_outside_window", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_validation_priority_and_absolute_reversal", "outcome": "passed"}], "version": 1}
