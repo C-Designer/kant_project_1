@@ -91,3 +91,74 @@ not_run은 미실행이며 실패가 아닙니다. missing_response는 입력 �
 | B09 | 2 | solved | [raw JSON](model-1/B09-r2.raw.json) · [solution](model-1/B09-r2.solution.py) · [pytest log](model-1/B09-r2.pytest.log) |
 | B10 | 1 | solved | [raw JSON](model-1/B10-r1.raw.json) · [solution](model-1/B10-r1.solution.py) · [pytest log](model-1/B10-r1.pytest.log) |
 | B10 | 2 | solved | [raw JSON](model-1/B10-r2.raw.json) · [solution](model-1/B10-r2.solution.py) · [pytest log](model-1/B10-r2.pytest.log) |
+
+---
+
+> ⚠️ **아래 비교 섹션은 수동으로 추가한 내용입니다.** 위쪽은 `harness report`가 이 폴더의
+> `manifest.json`/`results.jsonl`만으로 자동 생성한 것(gpt-5.6-luna 단일 모델)이고, 아래는 다른
+> 실행(`results/chanyeongg3/20260915-qwen25-coder-7b/`)과 수동으로 나란히 정리한 것입니다.
+> **`uv run python -m harness report`로 이 파일을 재생성하면 이 섹션은 사라집니다** — 재생성 시
+> 이 섹션을 다시 붙여넣어야 합니다.
+
+## 비교: qwen2.5-coder:7b vs gpt-5.6-luna
+
+> 서로 다른 두 실행 — 팀 공식 제출 [`results/chanyeongg3/20260915-qwen25-coder-7b/`](../../chanyeongg3/20260915-qwen25-coder-7b/)와 이 폴더의 `gpt-5.6-luna` 실행 —
+> 의 `summary.json`/`results.jsonl`을 나란히 정리했습니다. 하나의 manifest로 실행된 공식
+> `run --models A B` 비교가 아니며, 참가자·장비·일부 생성 옵션이 다릅니다. 증거 원문은 중복
+> 저장하지 않았으므로 각 모델의 원본 `results/` 경로에서 확인하세요.
+
+### 실행 정보
+
+| 항목 | qwen2.5-coder:7b | gpt-5.6-luna |
+|---|---|---|
+| participant | chanyeongg3 | cloud |
+| 실행 경로 | `results/chanyeongg3/20260915-qwen25-coder-7b/` | `results/cloud/20260916-gpt5-6-luna/` |
+| command | run-model | run-model (`scripts/cloud_run_model.py`) |
+| device_label | rtx5070-8gb-local (오기, 실제로는 RTX 5060 Laptop) | cloud-api |
+
+### 고정 옵션 (두 실행이 서로 다름 — 그대로 병기)
+
+| 옵션 | qwen2.5-coder:7b | gpt-5.6-luna |
+|---|---|---|
+| num_ctx | 8192 | 미기록(해당 없음) |
+| num_predict / max_completion_tokens | 2048 | 2048 |
+| temperature | 0.2 | 미지원(모델이 HTTP 400으로 거부 — 기본값 사용) |
+| seed / repeat_seeds | 42, 43 | 미지원(없음) |
+| generation_api | /api/generate (Ollama) | /chat/completions (OpenAI 호환) |
+
+### 완료 상태 비교
+
+| 모델 | solved/planned | call_successes/attempts | 두 반복 모두 해결/케이스 | 응답 품질 n | not_run | 인프라 오류 |
+|---|---|---|---|---|---|---|
+| qwen2.5-coder:7b | 6/20 | 20/20 | 3/10 | 20 | 0 | 0 |
+| gpt-5.6-luna | **20/20** | 20/20 | **10/10** | 20 | 0 | 0 |
+
+### 성공한 호출의 지표 평균 비교 (각 유효 표본 n)
+
+| 모델 | elapsed s (n) | loading s (n) | tokens/sec (n) | VRAM MiB (n) |
+|---|---|---|---|---|
+| qwen2.5-coder:7b | 2.225 (n=20) | 0.002 (n=20) | 66.227 (n=20) | 4756.100 (n=20) |
+| gpt-5.6-luna | 4.845 (n=20) | null (n=0) | null (n=0) | null (n=0) |
+
+### 케이스별 반복 상태 비교
+
+| case | qwen2.5-coder 1회 | qwen2.5-coder 2회 | gpt-5.6-luna 1회 | gpt-5.6-luna 2회 |
+|---|---|---|---|---|
+| B01 | test_failure | test_failure | solved | solved |
+| B02 | solved | solved | solved | solved |
+| B03 | test_failure | test_failure | solved | solved |
+| B04 | solved | solved | solved | solved |
+| B05 | test_failure | test_failure | solved | solved |
+| B06 | solved | solved | solved | solved |
+| B07 | test_failure | test_failure | solved | solved |
+| B08 | test_failure | test_failure | solved | solved |
+| B09 | test_failure | test_failure | solved | solved |
+| B10 | test_failure | test_failure | solved | solved |
+
+### 해석 (비공식, 팀 검증 전)
+
+gpt-5.6-luna가 10문제 20회 전부 해결(100%)해 qwen2.5-coder:7b(6/20, 30%)를 크게 앞섰다. qwen이
+두 반복 모두 실패한 7문제(B01, B03, B05, B07, B08, B09, B10) 전부를 gpt-5.6-luna는 해결했다. 다만
+비교 조건이 완전히 동일하지 않다: 클라우드는 temperature/seed를 제어할 수 없었고, 이 실행은
+`docs/CLOUD.md`의 공식 5×1 Cloud 프로토콜이 아닌 20회 프로토콜이라 팀의 공식 결론으로 바로 쓸 수
+없다. 자세한 한계는 [`NOTES.md`](NOTES.md)를 참고한다.
