@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdkfTxefFSVUfYji5VRS9CFqr5Eg",
+    "object": "chat.completion",
+    "created": 1789541385,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nclass TransientError(Exception):\n    pass\n\n\nclass PermanentError(Exception):\n    pass\n\n\nclass FakeNotificationService:\n    def __init__(self, failures=()):\n        self._failures = list(failures)\n        self.calls = 0\n        self.effects = []\n        self._receipts = {}\n\n    def send(self, key: str, message: str) -> str:\n        self.calls += 1\n        event = self._failures.pop(0) if self._failures else \"ok\"\n\n        if event == \"before\":\n            raise TransientError(\"before delivery\")\n        if event == \"permanent\":\n            raise PermanentError(\"rejected\")\n\n        if key not in self._receipts:\n            self.effects.append((key, message))\n            self._receipts[key] = \"receipt:\" + key\n\n        if event == \"after\":\n            raise TransientError(\"response lost\")\n\n        return self._receipts[key]\n\n\ndef send_notification(service, key: str, message: str, max_attempts: int = 3) -> str:\n    if (\n        not isinstance(max_attempts, int)\n        or isinstance(max_attempts, bool)\n        or max_attempts < 1\n    ):\n        raise ValueError(\"max_attempts must be positive\")\n\n    for attempt in range(max_attempts):\n        try:\n            return service.send(key, message)\n        except TransientError:\n            if attempt == max_attempts - 1:\n                raise\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1234,
+      "completion_tokens": 806,
+      "total_tokens": 2040,
+      "prompt_tokens_details": {
+        "cached_tokens": 1231,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 490,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 9.171999999991385
+}

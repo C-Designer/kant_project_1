@@ -1,0 +1,4 @@
+..........
+10 passed in 0.03s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 0, "tests": [{"nodeid": "test_public.py::test_defaults", "outcome": "passed"}, {"nodeid": "test_public.py::test_explicit_values", "outcome": "passed"}, {"nodeid": "test_public.py::test_none_defaults", "outcome": "passed"}, {"nodeid": "test_public.py::test_negative_offset", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_invalid_limits", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_invalid_offsets", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_invalid_archive_flags", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_error_precedence", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_valid_boundaries_and_new_results", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_mutable_invalid_input_unchanged", "outcome": "passed"}], "version": 1}

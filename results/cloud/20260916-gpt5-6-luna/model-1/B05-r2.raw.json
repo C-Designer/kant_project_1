@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdkLojB5iqxYZcjOecCdhpj2lVQa",
+    "object": "chat.completion",
+    "created": 1789541365,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nclass IdempotencyStore:\n    def __init__(self):\n        self._entries = {}\n\n    def execute(self, key: str, payload: dict[str, int]) -> dict[str, int]:\n        if key in self._entries:\n            stored_payload, stored_result = self._entries[key]\n            if stored_payload != payload:\n                raise ValueError(\"idempotency key reused with different payload\")\n            return dict(stored_result)\n\n        stored_payload = dict(payload)\n        stored_result = {\"total\": sum(payload.values())}\n        self._entries[key] = (stored_payload, stored_result)\n        return dict(stored_result)\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 845,
+      "completion_tokens": 219,
+      "total_tokens": 1064,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 77,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 3.2969999999913853
+}

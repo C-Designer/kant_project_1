@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdl5Nm1VkenE0Yg9XHOwq5kRwf9P",
+    "object": "chat.completion",
+    "created": 1789541411,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom copy import deepcopy\n\n\ndef place_order(inventory, orders, order_id, items, fail_at=None):\n    if order_id in orders:\n        raise ValueError(\"duplicate order\")\n\n    for sku, quantity in items.items():\n        if sku not in inventory or inventory[sku] < quantity:\n            raise ValueError(\"unavailable stock\")\n\n    inventory_snapshot = inventory.copy()\n    orders_snapshot = deepcopy(orders)\n\n    try:\n        for sku, quantity in items.items():\n            inventory[sku] -= quantity\n\n        if fail_at == \"after_stock\":\n            raise RuntimeError(\"simulated failure\")\n\n        orders[order_id] = {\n            \"items\": dict(items),\n            \"status\": \"confirmed\",\n        }\n\n        if fail_at == \"after_order\":\n            raise RuntimeError(\"simulated failure\")\n\n        return deepcopy(orders[order_id])\n    except RuntimeError:\n        inventory.clear()\n        inventory.update(inventory_snapshot)\n        orders.clear()\n        orders.update(deepcopy(orders_snapshot))\n        raise\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1217,
+      "completion_tokens": 731,
+      "total_tokens": 1948,
+      "prompt_tokens_details": {
+        "cached_tokens": 1214,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 512,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 12.14100000000326
+}

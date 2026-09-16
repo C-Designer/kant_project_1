@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-09-16T06:48:44.281565+00:00",
+  "command": "run-model",
+  "models": [
+    "gpt-5.6-luna"
+  ],
+  "cases": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10"
+  ],
+  "repeats": 2,
+  "planned_per_model": 20,
+  "suite_sha256": {
+    "B01": {
+      "prompt.md": "c0841cc7538f05f09b7a619d628a3c00c347817070d3062ccb5b500ee754cc4a",
+      "starter.py": "2d9c10791fd549a883b2e95e9ebd43df98bf48b0ec04aad0ef52b074a20b94ea",
+      "reference.py": "ec1b59be17cd952378c533e9f9fa1fd8e91cc45710b5d23f0742388279c93bb9",
+      "test_public.py": "da8cfdb742647cfa3a503dacdbfd87a67dea03ffb943da5072479b8d240064df",
+      "test_hidden.py": "a94785890bb310b1b38dc02a4dc38ab2f3776a9383f113ece11621b940921f57"
+    },
+    "B02": {
+      "prompt.md": "1b9c3d4409bd65af49fbea7f58fcae85d3c0eabf9b1d27d5b3bec2971e7faea8",
+      "starter.py": "6e1f97a50d9cb2f17b5bd69ff494030b37351f8cfdd682f7b076810bd25d14f4",
+      "reference.py": "f5ddf7292de97d2e7c6859caa9a5836efdce6124141a7e429af7b68827c46947",
+      "test_public.py": "f162a52bd5d2d075bca2d86d021fdf61acaa34f9a40b7b6487cca712ee7675d3",
+      "test_hidden.py": "0c541fce1a5e1fc498046d720dfaf2d5dfae3e8e8df31ef30ec400b2197a738f"
+    },
+    "B03": {
+      "prompt.md": "88c6ffdb646f738f35e5fb65e386a7d72dc1ebc57e01d55ac80275a7544060cb",
+      "starter.py": "a6b17d9cafd3e1ef871b3c889f826551aad12888882edcb428dded642b73e52b",
+      "reference.py": "1cbccb87807e3357f02653b9cb56f9a38b249171f2fc7db83168e40864075321",
+      "test_public.py": "73839636c1816141dcd585805875b355e0afa52eca9435d7a460d65444ce3f1b",
+      "test_hidden.py": "e9ed186a626d0690b8d64b08d93690d4be550fe14bb854ea8b85998c3ead9cf5"
+    },
+    "B04": {
+      "prompt.md": "9db5e52c55a24c1e2ac1d242fd5de909cbd67fc964797782fe5c4fd5d5dd4f54",
+      "starter.py": "aedd3479ea1f1e995a0e959ddfa63d466485bfb9498eec62a35d1e9e4999dd9a",
+      "reference.py": "e2bf98f60c836ec708eb8ee24e2230f0cf15a300143883a72ed1201aa4108353",
+      "test_public.py": "beb6b7b3dc043e05cf0caae252e42658572805f7ee108ff96945536a4de870bc",
+      "test_hidden.py": "4cff8879de6c734aa9d87a0b7b73a52132cb44236a07a5f230624dda6706bfe9"
+    },
+    "B05": {
+      "prompt.md": "b1ba9acb479abe111b9ae70525437df54158e64c85a8413a8f09a5bc96a2f322",
+      "starter.py": "8a25534fab3cf547acfdc280d7118631c273add63b3ad716cae57aa6b86fb14b",
+      "reference.py": "e986d6d8c91b4d6293cbe51578ae56a8b44f881e65d5aa1385c1d31ad2836deb",
+      "test_public.py": "c0f252212f6b3d5c1cd9e034587a83c1cc2bce45769e758fa1cf240740ae398b",
+      "test_hidden.py": "d910a69a9805a139ba45abb38de44e5803f356ccaacdb6d029f626a3073f0c10"
+    },
+    "B06": {
+      "prompt.md": "3907389f2aa8f327f65d95cdf7193e07239adffa5de4fdd15bf06bc5e62b5391",
+      "starter.py": "91b52b25a38e0beffc69547dc78868f88484f6ae2a359179cf0285a531d7990b",
+      "reference.py": "a1096ec36095062c67647ea6a6bd124e600e4c16a42bb3ca565f8ec202a1446f",
+      "test_public.py": "2c7f96ff07e26b53f6840a88fc9c8b2d2689bbb1bba63b7eb812e6d2f138640a",
+      "test_hidden.py": "4a788062662840c91e65804396f4ce3fbc32c26c7d9346384cc6cc294d5a4964"
+    },
+    "B07": {
+      "prompt.md": "7a6cc14d47f6bb7aa5fa2849cc719a6ebc84654edf6b53a0d7a115a9611fca52",
+      "starter.py": "61cf221430fe26e44fe427de1d3dd5fa32a5cb6067eda519ccf7e628b3c51685",
+      "reference.py": "0ca9a6059082f8e2d2ebc037c1e96fe9cd1c1e516075c79a5e97113b4c7d7fa3",
+      "test_public.py": "20432722636b3df29de3a534bc35619a6fe1ede7ef7c5b37e9953470bb33f584",
+      "test_hidden.py": "1efe1defed8c286039e64da3a26cd0681596ae96b466439b1851563aebee65f2"
+    },
+    "B08": {
+      "prompt.md": "3017a3be4209da6adb04b2a063d8a25d80b119a26c703a21df986bc8c85cdfcb",
+      "starter.py": "acf63a2afd20bf377433f638fbfcb465e9d7d0952048954f6a9bbae831f3a0f2",
+      "reference.py": "e95416e5d6fd850f85d87c126e9bc24e1caa0992f32b02eab678ecbc665ee9b3",
+      "test_public.py": "adb6f21008c381670ed6a092c441e23743719d3a536419137e0d7490d616479d",
+      "test_hidden.py": "0f09fa37633ac7f1fd3eccfdecd4b952829b639b5fcfb4113cd87a5963deb694"
+    },
+    "B09": {
+      "prompt.md": "368076a08b39732fa1fe91e9d16f697b0d83b085b015f1882de38cec6b478f02",
+      "starter.py": "b68caceb460870a0ff4e199b1816bc559b7660cd964ca3aa6843a54dbfeeb6a9",
+      "reference.py": "dd22b6e33be22df1224cd5800bcca58789304ba17895c6a7a4ceaa225094ef6c",
+      "test_public.py": "e1cf44f29e5bd4575680b7c9e3edca12f54d8eb0b1fba0b76d0ea5b6a4b136ff",
+      "test_hidden.py": "121a3b7caf313f7ca5eba509fde4badcb30baefc5588ea20197fd4188cbb2e4e"
+    },
+    "B10": {
+      "prompt.md": "d48f0c79cc1ba5c6411b05f7a70822a820c2a386944adfd0df1ddc04cb22adbf",
+      "starter.py": "73bcb0e833ee28ad3595dd14ccdbfe9c8d1312f176f90783f5b0fa0e20444b01",
+      "reference.py": "931c89c9a24e2210de0687ff67aa2f38a87da25dd7b3d816f114cda25aa6a8bd",
+      "test_public.py": "0ff345a535736348cd7a593fd3d954e163c334df02454f02ea0491d8c5292e2f",
+      "test_hidden.py": "539b98ecf58e2c4b580d31bd483d76e9234bed80daa1cc511fcbde630245fb87"
+    }
+  },
+  "prompt_sha256": {
+    "B01": "c9e8720b84e38b969229013f012de678984b60892c7f0b7c2ea2ec4f0f2f5980",
+    "B02": "aa0268daf9188a89636c04c8f4a8a5e5614d403436d71da4c2229e30fc09c783",
+    "B03": "f4456269cbb8ec4040fef998985f16a6d42ae50f80bda79d8d7a5a959d80aaf8",
+    "B04": "b6475ed21f9b16ca6127c62f270e5001dff36ab458f154c52dbcab5f2610448c",
+    "B05": "8f11807bfc9d6f4da34be5a7e4bcd55ba5ab94fbbc60e5239603bd975bbbc8f1",
+    "B06": "fb65f96803b7b400d87b9acc2335a7fcbc0a0937b5cdbd79d92810a77c13518f",
+    "B07": "44ad5790af58d8c7624349dcfe80e5c8a70cea65b87e33bfefa2907f37e0ed46",
+    "B08": "4300d0a99567c053b3d0a01d7085ad69a3447ce596d977ea10d10e39de5d4950",
+    "B09": "892593a397633c47ff628957240595ab3059943d64a27b19e54d31e4f9cd64d3",
+    "B10": "8826328993b5f1aa9bdeb00908a8ffd48fae65cae2db13ab5d163c0c3b80666e"
+  },
+  "execution_notice": "Generated code runs as the current user with filesystem and network access. A temporary directory, Python -I, and a subprocess wall-time limit are not security isolation. No RAM, CPU, network, or filesystem isolation is provided. Hidden tests are excluded from prompts, but generated code can inspect them and shares pytest's interpreter. Runner reports are not tamper-proof against adversarial code.",
+  "retry_policy": "none",
+  "order": "model, case, repeat",
+  "evaluator": {
+    "backend": "python-subprocess",
+    "python_version": "3.12.13",
+    "pytest_version": "8.3.5",
+    "runner_sha256": "3e35801a89df9d5e9e650202bd7a113014e2202ebe8694ad4d327a182a619177",
+    "runner_hash": "3e35801a89df9d5e9e650202bd7a113014e2202ebe8694ad4d327a182a619177",
+    "wall_timeout": 30.0
+  },
+  "environment": {
+    "os": {
+      "system": "Windows",
+      "release": "11",
+      "machine": "AMD64"
+    },
+    "python_version": "3.12.13",
+    "cpu": {
+      "architecture": "AMD64",
+      "logical_count": 24,
+      "logical_count_unavailable_reason": null,
+      "name": null,
+      "name_unavailable_reason": "generic architecture only; identity intentionally omitted"
+    },
+    "ram_bytes": 33752997888,
+    "ram_unavailable_reason": null,
+    "nvidia_gpus": [
+      {
+        "name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "memory_total_mib": 8151.0,
+        "driver_version": "592.01"
+      }
+    ],
+    "nvidia_unavailable_reason": null
+  },
+  "source_commit": "d339b0c41dbf1c9580a807f82ee4066dc58dcde0",
+  "source_dirty": true,
+  "participant": "cloud",
+  "device_label": "cloud-api",
+  "model_card_url": null,
+  "license_url": null,
+  "metadata_provenance": "participant, device_label, model_card_url and license_url are user supplied; unverified",
+  "model_sources": {
+    "gpt-5.6-luna": {
+      "model_card_url": null,
+      "license_url": null,
+      "provenance": "user supplied; unverified"
+    }
+  },
+  "run_status": "completed",
+  "completed_attempts": 20,
+  "planned_attempts": 20,
+  "options": {
+    "num_ctx": null,
+    "num_predict": 2048,
+    "temperature": null,
+    "seed": null
+  },
+  "repeat_seeds": [
+    null,
+    null
+  ],
+  "endpoint": "https://api.openai.com/v1",
+  "generation_api": "/chat/completions",
+  "history": "reset each request; no context sent",
+  "cloud_controls": "OpenAI-compatible chat completions API; no local seed control. This model rejects any non-default temperature (HTTP 400), so temperature is not sent and the model's own default applies. This run uses the full 10-case x2-repeat local-style protocol, NOT the team's fixed 5-call Cloud comparison in docs/CLOUD.md."
+}

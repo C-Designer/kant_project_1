@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdkWrIhKLKU1JwZ6ZdgpK65DsrDQ",
+    "object": "chat.completion",
+    "created": 1789541376,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef update_profile(profile, patch):\n    allowed = {\"display_name\", \"bio\", \"alerts\"}\n\n    for key, value in patch.items():\n        if key not in allowed or (key in {\"display_name\", \"alerts\"} and value is None):\n            raise ValueError(\"invalid patch\")\n\n    profile.update(patch)\n    return dict(profile)\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 627,
+      "completion_tokens": 194,
+      "total_tokens": 821,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 111,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 3.1559999999881256
+}
