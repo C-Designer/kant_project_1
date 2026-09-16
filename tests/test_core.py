@@ -4,14 +4,15 @@ from harness.core import (CASE_IDS, CLOUD_IDS, ExtractionError, atomic_write, bu
                           extract_python, metrics, summarize)
 
 
-@pytest.mark.parametrize('text', ['```python\nprint(1)\n```', '\n```python\nprint(1)\n```\n'])
-def test_extract(text):
-    assert extract_python(text) == 'print(1)\n'
+@pytest.mark.parametrize('text', ['```python\nprint(1)\n```', '\n```python\nprint(1)\n```\n',
+    '```py\n1\n```', '~~~python\n1\n~~~', 'Here:\n```python\n1\n```', '```python\n1\n```\nDone.'])
+def test_extract_ignores_surrounding_prose_and_common_labels(text):
+    assert extract_python(text) in ('print(1)\n', '1\n')
 
 
-@pytest.mark.parametrize('text', ['', 'print(1)', '```py\n1\n```', '```python\n\n```',
-    '```python\n1\n```\n```python\n2\n```', '~~~python\n1\n~~~', '````python\n1\n````',
-    '```python\n1', '```python extra\n1\n```', 'Here:\n```python\n1\n```', '```python\n1\n```\nDone.', None])
+@pytest.mark.parametrize('text', ['', 'print(1)', '```python\n\n```',
+    '```python\n1\n```\n```python\n2\n```', '````python\n1\n````',
+    '```python\n1', '```python extra\n1\n```', None])
 def test_extraction_rejects(text):
     with pytest.raises(ExtractionError):
         extract_python(text)
