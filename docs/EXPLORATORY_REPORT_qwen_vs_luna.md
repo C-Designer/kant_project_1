@@ -1,5 +1,7 @@
 # 탐색 실행 보고서: qwen2.5-coder:7b vs gpt-5.6-luna
 
+> **정정 주석 (2026-09-17, 병합 시 추가):** 아래 경고문의 "Docker 격리 없이 실행해 비공식"이라는 표현은 작성 시점 기준입니다. Docker 기반 평가기는 커밋 `e069b94`("Run benchmark evaluation directly in Python and simplify setup")에서 제거됐고, 현재 공식 평가기는 이 실행과 동일한 `python-subprocess` 방식입니다. 따라서 **이 보고서의 채점 방식은 현재 공식 절차와 같으며**, chanyeongg3의 공식 `run-model` 결과와 문제별 해결 패턴이 완전히 일치해 교차 재현 근거로 사용합니다. 원문은 작성자 기록 보존을 위해 수정하지 않았습니다.
+
 > ⚠️ **비공식 결과입니다.** 이 장비에는 Docker Desktop/WSL2가 설치되어 있지 않아, 프로젝트가 요구하는
 > 컨테이너 격리(`harness/docker_runner.py`, 네트워크·자원 제한) 없이 생성 코드를 호스트 서브프로세스에서
 > 직접 실행해 채점했습니다. Prompt 생성·코드 추출·pytest 판정 로직 자체는 공식 harness와 동일하게

@@ -1,13 +1,64 @@
 # KANT Project 1: 로컬 LLM 코딩 성능 비교
 
-**팀원 각자가 담당 로컬 모델 하나를 20회 테스트하고, 자동 보고서와 본인 해석을 남겨 push합니다.** 팀 전체에서는 서로 다른 모델 최소 2개를 비교합니다. 에이전트·UI·Tool Calling·재수정 루프는 없으며, 첫 답변의 전체 테스트 통과만 해결로 인정합니다.
+**Use Case:** 코딩 에이전트용 로컬 LLM 선정. 서로 다른 로컬 코딩 모델을 같은 Python 버그 수정 10문제 × 2회로 비교하고, Cloud API 1개를 기준선으로 두어 모델 1개를 선정합니다. 에이전트·UI·Tool Calling·재수정 루프는 없으며, 첫 답변의 전체 테스트 통과만 해결로 인정합니다.
 
-- **[팀원별 실행 → 보고서 → push 가이드](docs/INDIVIDUAL_RUN.md)**
-- [팀 Notion 안내](https://app.notion.com/p/teamsparta/LLM-3dc2dc3ef514806d8b73eb017901cd17)
+## 결과 요약 (2026-09-17 기준)
+
+| 모델 | 완전 해결 / 20회 | 두 번 모두 해결 / 10문제 | 평균 응답 시간 | tokens/s | VRAM | 실행자 |
+|---|---|---|---|---|---|---|
+| **qwen2.5-coder:7b (Q4_K_M)** ← 선정 | **6/20** | 3/10 | 2.2 s | 66 | 4,756 MiB | chanyeongg3 (김지수 재현 일치) |
+| deepseek-coder:6.7b-instruct (Q4_0) | 2/20 | 1/10 | 7.7 s | 28 | 5,943 MiB | chanyeongg3 (김지수 재현 일치) |
+| codellama:7b (Q4_0, 탐색) | 1/20 | 0/10 | 17.1 s | 30 | 6,230 MiB | errorn |
+| gpt-5.6-luna (Cloud, 기준선) | 20/20 | 10/10 | 4.8 s (네트워크 포함) | 해당 없음 | 해당 없음 | errorn, 김지수 |
+
+세 로컬 모델 모두 RTX 5060 Laptop 8 GB 동일 사양 노트북에서 실행했지만 물리적으로 다른 장비이므로 속도 절대값은 같은 PC 안에서만 비교합니다. **최종 선정과 근거, 한계, 운영 권고는 [docs/FINAL_REPORT.md](docs/FINAL_REPORT.md)에 있습니다.**
+
+## 문서 지도
+
+- **[팀 종합 비교·최종 모델 선정 보고서](docs/FINAL_REPORT.md)** (양식: [RESULTS_TEMPLATE.md](docs/RESULTS_TEMPLATE.md))
 - [실험 규약·팀 참여 기록](docs/EXPERIMENT.md)
+- [Cloud API 비교 방법·측정표](docs/CLOUD.md)
+- [팀원별 실행 → 보고서 → push 가이드](docs/INDIVIDUAL_RUN.md)
 - [검증 상태](docs/VALIDATION.md)
-- [결과·모델 선정 양식](docs/RESULTS_TEMPLATE.md)
-- [Cloud API 비교 방법](docs/CLOUD.md)
+- 탐색 보고서: [qwen vs deepseek](docs/EXPLORATORY_REPORT_qwen_vs_deepseek.md) · [qwen vs codellama](docs/EXPLORATORY_REPORT_qwen_vs_codellama.md) · [qwen vs luna](docs/EXPLORATORY_REPORT_qwen_vs_luna.md) · [chanyeongg3 qwen vs luna](results/chanyeongg3/report.md)
+- [팀 Notion 안내](https://app.notion.com/p/teamsparta/LLM-3dc2dc3ef514806d8b73eb017901cd17) · [프로젝트 발제문](https://app.notion.com/p/teamsparta/3d72dc3ef51480fc99f1f45d94780de3)
+
+## 결과 파일 위치
+
+| 경로 | 내용 |
+|---|---|
+| `results/chanyeongg3/20260915-qwen25-coder-7b/` | qwen 공식 20회: `REPORT.md`, `NOTES.md`, `manifest.json`, `summary.json`, `results.jsonl`, `model-1/*.raw.json`·`*.solution.py`·`*.pytest.log`·`*.ps.json`, `warmup.raw.json` |
+| `results/chanyeongg3/20260915-deepseek-coder-67b/` | deepseek 공식 20회 (구조 동일) |
+| `results/김지수/no-docker-exploratory-20260915T041139Z/` | qwen·deepseek 각 20회 재현 실행 |
+| `results/cloud/20260916-gpt5-6-luna/` | Cloud 20회 (Chat Completions), 제공자 JSON 원본·토큰 사용량 포함 |
+| `results/김지수/luna-exploratory-20260916T080707Z/` | Cloud 20회 (Responses API) |
+| `cases/B01`~`B10` | 문제·시작 코드·정답·공개/평가 테스트 |
+| `harness/` | 프롬프트 생성·Ollama 호출·코드 추출·pytest 평가·보고서 자동화 |
+| `scripts/` | `run-personal.ps1`(개인 실행), `cloud_run_model.py`·`luna_ten_cases.py`(Cloud 호출, 키는 `.env`에서 읽음) |
+
+codellama:7b 원본 로그는 `runs/`(gitignore)에만 있어 저장소에 없으며 보고서 수치만 인용합니다.
+
+## 팀원별 기여
+
+| 팀원 | 기여 |
+|---|---|
+| 김창동 (C-Designer) | 문제 10개 설계, 하네스·평가기·자동 보고서, 실험 규약·가이드, 결과 병합, 최종 종합 보고서 |
+| 김찬영 (chanyeongg3) | Windows 테스트 호환 수정, qwen·deepseek 공식 20회 실행·NOTES, qwen vs luna 비교 보고서 |
+| 김지수 (d-jskim) | qwen·deepseek 재현 실행, luna 20회(Responses API), 탐색 보고서 2건, `luna_ten_cases.py` |
+| 권오륜 (errorn) | codellama 20회, luna 20회(`cloud_run_model.py`), 코드 추출 규칙 완화, qwen vs codellama 보고서 |
+
+상세는 [EXPERIMENT.md 참여 기록](docs/EXPERIMENT.md#아직-팀에서-확인할-항목)을 보세요.
+
+## 재실행 확인
+
+- **독립 재현 (다른 팀원, 다른 노트북):** 김지수가 chanyeongg3와 별도 노트북(동일 사양)에서 qwen2.5-coder:7b·deepseek-coder:6.7b-instruct 각 20회를 다시 실행한 결과(`results/김지수/no-docker-exploratory-20260915T041139Z/`)가 chanyeongg3 공식 결과와 문제별 해결 패턴·출력 토큰 수·VRAM까지 일치했습니다 (qwen 6/20, deepseek 2/20). seed 42/43 고정 조건에서 결정적으로 재현됩니다.
+- **Cloud 독립 재현:** errorn(Chat Completions)과 김지수(Responses API)가 각각 gpt-5.6-luna 20회를 실행해 모두 20/20이었습니다.
+- **하네스 단위 테스트:** `uv run python -m pytest tests -q` → 2026-09-17 macOS(김창동, `790f824` 기준) **189 passed**. Windows에서는 2026-09-15 chanyeongg3의 커밋 `57f9bc8`("Make the test suite pass on Windows and non-UTF-8 locales")로 통과 상태를 맞췄습니다.
+- 문제 사전 검증(`harness verify-cases`) 결과는 [docs/VALIDATION.md](docs/VALIDATION.md)에 있습니다.
+
+---
+
+## 실행 가이드 (아래는 실험 진행 중 사용한 안내입니다)
 
 ## 가장 빠른 개인 실행 흐름
 Windows PowerShell 예시입니다. Git·uv·Ollama이 설치되어 있어야 합니다. 모델 태그와 본인 ID는 직접 정합니다.
@@ -41,7 +92,7 @@ if ($LASTEXITCODE -ne 0) { throw "모델 다운로드 실패" }
 4. Python 평가기로 정답은 모두 통과하고 초기 코드에서는 버그가 잡히는지 확인합니다.
 5. 팀에서 서로 다른 모델을 배정하고, 각자는 담당 모델의 Model Card·License·전체 태그를 기록합니다. 모두 같은 문제·생성 설정을 사용합니다. 공정한 속도 비교와 발제문 기본 요건을 위해 공통 평가 PC에서 각자 실행하는 방식을 권장합니다.
 
-**아직 모델 성능 결과는 없습니다.** 노트북 사양·모델 후보·실장비 실행·팀 역할은 확인해야 합니다. 2060 계열 GPU는 사용자 기억이며 확정 사양이 아닙니다.
+실제 실행 장비는 참가자 3명 모두 Windows 11 / RTX 5060 Laptop 8,151 MiB / RAM 33.8 GB였습니다(`manifest.json`의 `environment` 기록).
 
 ## 10문제: 실제 코드와 테스트
 | ID | 주제 | 핵심 검증 | 코드 |
@@ -114,4 +165,4 @@ uv run python -m harness summarize runs/local-001
 ## 보안과 공유
 생성 코드는 현재 사용자 권한으로 실행되며 파일과 네트워크에 접근할 수 있습니다. 임시 폴더·별도 Python 프로세스·시간 제한은 보안 격리가 아닙니다. 민감 파일 없는 실습 장비에서 실행하고, 모델 응답이 테스트 실행을 조작할 수 있다는 한계도 고려하세요.
 
-저장소는 현재 **Private**입니다. 404가 보이는 팀원은 소유자와 협업자 초대·수락 상태를 확인하세요. 이번 작업에서는 공개 전환이나 협업자 권한 변경을 하지 않았습니다. Notion은 기존 공유 범위를 유지합니다.
+저장소는 제출을 위해 **Public**으로 전환합니다. `results/` 안의 `show.raw.json`과 일부 pytest 로그에 Windows 사용자명 경로가 남아 있으며 팀 합의로 마스킹하지 않았습니다. API 키·자격증명 패턴은 전체 스캔에서 탐지되지 않았습니다.

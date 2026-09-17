@@ -45,11 +45,14 @@
 - 서로 다른 로컬 모델 2개, Model Card·License 원문, 사용 목적에 맞는 라이선스, 실제 태그·digest.
 - Cloud 모델과 API 사용 권한·비용 한도. 이 문서 작성 과정에서는 유료 API를 호출하지 않았다.
 - 실행 옵션·시간/메모리 상한 및 최소 품질 요구. 모든 후보에 동일하게 적용한다.
-- 팀원의 역할과 참여 기록. 아래 템플릿은 배정이 아니라 팀에서 채울 항목이다.
+- 팀원의 역할과 참여 기록. 아래 표는 git 히스토리(`git log --author`)와 결과 폴더 기준으로 작성했고 2026-09-17 팀 리드가 확인했다.
 
 | 팀원 | 문제·기준 검토 | 모델 실행·기록 | 채점·실패 분석 | 커밋/결과 경로 |
 |---|---|---|---|---|
-| 기입 | 기입 | 기입 | 기입 | 기입 |
+| 김창동 (C-Designer) | 문제 10개(prompt/starter/reference/test) 설계, 하네스·평가기·보고서 자동화, 실험 규약·가이드 문서 | 로컬 모델 직접 실행 없음(macOS) | 팀원 결과 병합·교차 확인, 최종 종합 보고서 | `d460674`~`e069b94`, `0d75154`, `790f824`; `cases/`, `harness/`, `docs/`, `docs/FINAL_REPORT.md` |
+| 김찬영 (chanyeongg3) | Windows·비 UTF-8 로케일에서 테스트 스위트 통과하도록 수정 | qwen2.5-coder:7b-instruct, deepseek-coder:6.7b-instruct 각 20회 (공식 `run-model`, 같은 PC) | 두 모델 NOTES.md, qwen vs luna 비교 보고서 | `57f9bc8`, `a5ae618`, `994639c`; `results/chanyeongg3/` |
+| 김지수 (d-jskim) | 프로토콜 재현성 교차 확인 | qwen2.5-coder:7b, deepseek-coder:6.7b-instruct 각 20회(탐색 실행, 같은 PC), gpt-5.6-luna 20회(Responses API) | qwen vs deepseek, qwen vs luna 탐색 보고서 | `10299d1`, `e895b63`, `1d6bf9e`; `results/김지수/`, `docs/EXPLORATORY_REPORT_qwen_vs_deepseek.md`, `docs/EXPLORATORY_REPORT_qwen_vs_luna.md`, `scripts/luna_ten_cases.py` |
+| 권오륜 (errorn) | 코드 추출 규칙 완화 제안·구현(`harness/core.py`, `tests/test_core.py`) | codellama:7b 20회(탐색 실행), gpt-5.6-luna 20회(`scripts/cloud_run_model.py`) | qwen vs codellama 보고서, Cloud NOTES.md | `ce9e043`, `1ebea4d`, `e5d1148`; `results/cloud/`, `docs/EXPLORATORY_REPORT_qwen_vs_codellama.md` |
 
 모든 팀원이 실행·결과 기록·채점에 참여한다. 코드를 만든 사람이 평가 기준을 임의로 바꾸지 않도록 다른 팀원이 명세와 테스트 대응을 검토한다.
 
