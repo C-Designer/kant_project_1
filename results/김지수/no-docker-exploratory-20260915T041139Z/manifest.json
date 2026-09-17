@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "command": "run",
+  "run_status": "completed",
+  "models": [
+    "qwen2.5-coder:7b",
+    "deepseek-coder:6.7b-instruct"
+  ],
+  "cases": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10"
+  ],
+  "repeats": 2,
+  "options": {
+    "num_ctx": 8192,
+    "num_predict": 2048,
+    "temperature": 0.2,
+    "seed": 42
+  },
+  "repeat_seeds": [
+    42,
+    43
+  ],
+  "wall_timeout": 30.0,
+  "sandbox_notice": "NOT the project's Docker sandbox - Docker/WSL2 unavailable on this machine, so generated code ran in a plain host subprocess with no network/resource isolation. Exploratory, non-official comparison only.",
+  "created_utc": "2026-09-15T04:11:39Z"
+}

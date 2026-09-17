@@ -1,0 +1,29 @@
+....FFFF..                                                               [100%]
+================================== FAILURES ===================================
+_____________________________ test_invalid_limits _____________________________
+test_hidden.py:6: in test_invalid_limits
+    with pytest.raises(ValueError) as exc:
+E   Failed: DID NOT RAISE <class 'ValueError'>
+____________________________ test_invalid_offsets _____________________________
+test_hidden.py:12: in test_invalid_offsets
+    with pytest.raises(ValueError) as exc:
+E   Failed: DID NOT RAISE <class 'ValueError'>
+_________________________ test_invalid_archive_flags __________________________
+test_hidden.py:18: in test_invalid_archive_flags
+    with pytest.raises(ValueError) as exc:
+E   Failed: DID NOT RAISE <class 'ValueError'>
+____________________________ test_error_precedence ____________________________
+test_hidden.py:25: in test_error_precedence
+    assert str(exc.value) == "limit must be an integer between 1 and 100"
+E   AssertionError: assert 'offset must ...ative integer' == 'limit must b...een 1 and 100'
+E     
+E     - limit must be an integer between 1 and 100
+E     + offset must be a non-negative integer
+=========================== short test summary info ===========================
+FAILED test_hidden.py::test_invalid_limits - Failed: DID NOT RAISE <class 'Va...
+FAILED test_hidden.py::test_invalid_offsets - Failed: DID NOT RAISE <class 'V...
+FAILED test_hidden.py::test_invalid_archive_flags - Failed: DID NOT RAISE <cl...
+FAILED test_hidden.py::test_error_precedence - AssertionError: assert 'offset...
+4 failed, 6 passed in 0.03s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_defaults", "outcome": "passed"}, {"nodeid": "test_public.py::test_explicit_values", "outcome": "passed"}, {"nodeid": "test_public.py::test_none_defaults", "outcome": "passed"}, {"nodeid": "test_public.py::test_negative_offset", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_invalid_limits", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_invalid_offsets", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_invalid_archive_flags", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_error_precedence", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_valid_boundaries_and_new_results", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_mutable_invalid_input_unchanged", "outcome": "passed"}], "version": 1}

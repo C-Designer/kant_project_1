@@ -1,0 +1,35 @@
+...FFF..F.                                                               [100%]
+================================== FAILURES ===================================
+______________________________ test_before_retry ______________________________
+test_hidden.py:7: in test_before_retry
+    assert send_notification(s, "k", "hi") == "receipt:k"
+E   AssertionError: assert 'receipt:k:retry:2' == 'receipt:k'
+E     
+E     - receipt:k
+E     + receipt:k:retry:2
+______________________________ test_after_dedup _______________________________
+test_hidden.py:14: in test_after_dedup
+    assert send_notification(s, "k", "hi") == "receipt:k"
+E   AssertionError: assert 'receipt:k:retry:2' == 'receipt:k'
+E     
+E     - receipt:k
+E     + receipt:k:retry:2
+__________________________ test_permanent_immediate ___________________________
+test_hidden.py:21: in test_permanent_immediate
+    with pytest.raises(PermanentError):
+E   Failed: DID NOT RAISE <class 'solution.PermanentError'>
+_________________ test_generic_service_and_exception_identity _________________
+test_hidden.py:63: in test_generic_service_and_exception_identity
+    assert s.calls == [("", ""), ("", "")]
+E   AssertionError: assert [('', ''), (':retry:1', '')] == [('', ''), ('', '')]
+E     
+E     At index 1 diff: (':retry:1', '') != ('', '')
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED test_hidden.py::test_before_retry - AssertionError: assert 'receipt:k:...
+FAILED test_hidden.py::test_after_dedup - AssertionError: assert 'receipt:k:r...
+FAILED test_hidden.py::test_permanent_immediate - Failed: DID NOT RAISE <clas...
+FAILED test_hidden.py::test_generic_service_and_exception_identity - Assertio...
+4 failed, 6 passed in 0.04s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 1, "tests": [{"nodeid": "test_public.py::test_normal", "outcome": "passed"}, {"nodeid": "test_public.py::test_existing_key", "outcome": "passed"}, {"nodeid": "test_public.py::test_independent_keys", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_before_retry", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_after_dedup", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_permanent_immediate", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_bounded_attempts", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_invalid_limit", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_generic_service_and_exception_identity", "outcome": "failed"}, {"nodeid": "test_hidden.py::test_fake_contract", "outcome": "passed"}], "version": 1}

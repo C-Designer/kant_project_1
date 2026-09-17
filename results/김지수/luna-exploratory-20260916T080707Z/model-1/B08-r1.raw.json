@@ -1,0 +1,99 @@
+{
+  "id": "resp_054292fab82a339b016aaa4ce2abc487d081988f4184a00038",
+  "created_at": 1789545698.0,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": null,
+  "metadata": {},
+  "model": "gpt-5.6-luna",
+  "object": "response",
+  "output": [
+    {
+      "id": "msg_054292fab82a339b016aaa4ce342c087d09ca45f4e4ef728ef",
+      "content": [
+        {
+          "annotations": [],
+          "text": "```python\nclass TransientError(Exception):\n    pass\n\n\nclass PermanentError(Exception):\n    pass\n\n\nclass FakeNotificationService:\n    def __init__(self, failures=()):\n        self._failures = list(failures)\n        self.calls = 0\n        self.effects = []\n        self._receipts = {}\n\n    def send(self, key: str, message: str) -> str:\n        self.calls += 1\n        event = self._failures.pop(0) if self._failures else \"ok\"\n\n        if event == \"before\":\n            raise TransientError(\"before delivery\")\n        if event == \"permanent\":\n            raise PermanentError(\"rejected\")\n\n        if key not in self._receipts:\n            self.effects.append((key, message))\n            self._receipts[key] = \"receipt:\" + key\n\n        if event == \"after\":\n            raise TransientError(\"response lost\")\n\n        return self._receipts[key]\n\n\ndef send_notification(service, key: str, message: str, max_attempts: int = 3) -> str:\n    if max_attempts < 1:\n        raise ValueError(\"max_attempts must be positive\")\n\n    for attempt in range(max_attempts):\n        try:\n            return service.send(key, message)\n        except TransientError:\n            if attempt == max_attempts - 1:\n                raise\n        except PermanentError:\n            raise\n        except Exception:\n            raise\n\n    raise AssertionError(\"unreachable\")\n```",
+          "type": "output_text",
+          "logprobs": []
+        }
+      ],
+      "role": "assistant",
+      "status": "completed",
+      "type": "message",
+      "phase": "final_answer"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "temperature": 1.0,
+  "tool_choice": "none",
+  "tools": [],
+  "top_p": 0.98,
+  "background": false,
+  "completed_at": 1789545701.0,
+  "conversation": null,
+  "max_output_tokens": 2048,
+  "max_tool_calls": null,
+  "moderation": null,
+  "previous_response_id": null,
+  "prompt": null,
+  "prompt_cache_diagnostics": null,
+  "prompt_cache_key": null,
+  "prompt_cache_options": null,
+  "prompt_cache_retention": "24h",
+  "reasoning": {
+    "context": "all_turns",
+    "effort": "none",
+    "generate_summary": null,
+    "mode": "standard",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "text": {
+    "format": {
+      "type": "text"
+    },
+    "verbosity": "medium"
+  },
+  "top_logprobs": 0,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 1234,
+    "input_tokens_details": {
+      "cache_write_tokens": 1231,
+      "cached_tokens": 0
+    },
+    "output_tokens": 311,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 1545
+  },
+  "user": null,
+  "billing": {
+    "payer": "developer"
+  },
+  "frequency_penalty": 0.0,
+  "presence_penalty": 0.0,
+  "store": false,
+  "tool_usage": {
+    "image_gen": {
+      "input_tokens": 0,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "total_tokens": 0
+    },
+    "web_search": {
+      "num_requests": 0
+    }
+  }
+}

@@ -1,0 +1,39 @@
+
+=================================== ERRORS ====================================
+_______________________ ERROR collecting test_public.py _______________________
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\python.py:493: in importtestmodule
+    mod = import_path(
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\assertion\rewrite.py:185: in exec_module
+    exec(co, module.__dict__)
+test_public.py:1: in <module>
+    from solution import invoice_total
+E     File "C:\Users\dunic\AppData\Local\Temp\kant-local-eval-0ddorqdr\solution.py", line 6
+E       return format(total.quantize(Decimal("0.01"), rounding=ROUND_HALF
+E                                   ^
+E   SyntaxError: '(' was never closed
+_______________________ ERROR collecting test_hidden.py _______________________
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\python.py:493: in importtestmodule
+    mod = import_path(
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\pathlib.py:561: in import_path
+    mod = _import_module_using_spec(
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\pathlib.py:725: in _import_module_using_spec
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+..\..\..\..\Documents\KANT_Portfolio\kant_project_1\.venv\Lib\site-packages\_pytest\assertion\rewrite.py:185: in exec_module
+    exec(co, module.__dict__)
+test_hidden.py:1: in <module>
+    from solution import invoice_total
+E     File "C:\Users\dunic\AppData\Local\Temp\kant-local-eval-0ddorqdr\solution.py", line 6
+E       return format(total.quantize(Decimal("0.01"), rounding=ROUND_HALF
+E                                   ^
+E   SyntaxError: '(' was never closed
+=========================== short test summary info ===========================
+ERROR test_public.py
+ERROR test_hidden.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!
+2 errors in 0.10s
+
+HARNESS_PYTEST_RESULT={"collection_errors": ["test_public.py", "test_hidden.py"], "exit_code": 2, "tests": [], "version": 1}

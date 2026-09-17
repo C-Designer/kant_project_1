@@ -1,0 +1,4 @@
+..........
+10 passed in 0.02s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 0, "tests": [{"nodeid": "test_public.py::test_normal", "outcome": "passed"}, {"nodeid": "test_public.py::test_multiple_and_unrelated", "outcome": "passed"}, {"nodeid": "test_public.py::test_exact_stock", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_after_stock_rollback", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_after_order_rollback", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_failure_then_success", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_shortage_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_missing_sku_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_duplicate_atomic", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_copies_and_sequential_success", "outcome": "passed"}], "version": 1}
