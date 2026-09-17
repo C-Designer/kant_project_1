@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdjzMeT74fHVnz6V7CL3D4URaOxE",
+    "object": "chat.completion",
+    "created": 1789541343,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef validate_options(limit=None, offset=None, include_archived=None) -> dict:\n    if limit is None:\n        limit = 20\n    if offset is None:\n        offset = 0\n    if include_archived is None:\n        include_archived = False\n\n    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:\n        raise ValueError(\"limit must be an integer between 1 and 100\")\n\n    if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:\n        raise ValueError(\"offset must be a non-negative integer\")\n\n    if not isinstance(include_archived, bool):\n        raise ValueError(\"include_archived must be a boolean\")\n\n    return {\n        \"limit\": limit,\n        \"offset\": offset,\n        \"include_archived\": include_archived,\n    }\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 684,
+      "completion_tokens": 271,
+      "total_tokens": 955,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 78,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 2.5780000000086147
+}

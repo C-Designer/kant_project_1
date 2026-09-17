@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdkTGtEbYUJ8jr5HELYnoohvh6JR",
+    "object": "chat.completion",
+    "created": 1789541373,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nclass ProfileService:\n    def __init__(self, profiles):\n        self._profiles = {user_id: dict(profile) for user_id, profile in profiles.items()}\n        self._cache = {}\n\n    def get_profile(self, user_id):\n        if user_id not in self._profiles:\n            raise KeyError(user_id)\n\n        if user_id not in self._cache:\n            self._cache[user_id] = dict(self._profiles[user_id])\n\n        return dict(self._cache[user_id])\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 603,
+      "completion_tokens": 179,
+      "total_tokens": 782,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 66,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 2.437999999994645
+}

@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdkB3dwJJHaolQZ5QryPxEGgl9VY",
+    "object": "chat.completion",
+    "created": 1789541355,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom datetime import datetime\n\n\ndef select_window(\n    timestamps: list[datetime], start: datetime, end: datetime\n) -> list[datetime]:\n    for value in [start, end, *timestamps]:\n        if value.utcoffset() is None:\n            raise ValueError(\"all timestamps must be timezone-aware\")\n\n    if start > end:\n        raise ValueError(\"start must not be after end\")\n\n    return [value for value in timestamps if start <= value < end]\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 882,
+      "completion_tokens": 307,
+      "total_tokens": 1189,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 197,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 5.092999999993481
+}

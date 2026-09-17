@@ -1,0 +1,4 @@
+..........
+10 passed in 0.03s
+
+HARNESS_PYTEST_RESULT={"collection_errors": [], "exit_code": 0, "tests": [{"nodeid": "test_public.py::test_first_page", "outcome": "passed"}, {"nodeid": "test_public.py::test_second_page", "outcome": "passed"}, {"nodeid": "test_public.py::test_partial_last_page", "outcome": "passed"}, {"nodeid": "test_public.py::test_empty", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_next_partial_page_regression", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_oversized_page_size", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_beyond_end_preserves_request", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_unit_pages", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_order_duplicates_and_mutability", "outcome": "passed"}, {"nodeid": "test_hidden.py::test_exact_last_page", "outcome": "passed"}], "version": 1}

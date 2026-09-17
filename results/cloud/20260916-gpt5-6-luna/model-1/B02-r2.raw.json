@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdjxSLo3ldpt5kIl92xK7U4HcmgL",
+    "object": "chat.completion",
+    "created": 1789541341,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef paginate(items: list[int], page: int, page_size: int) -> dict:\n    total = len(items)\n    total_pages = (total + page_size - 1) // page_size\n    start = (page - 1) * page_size\n    end = start + page_size\n\n    return {\n        \"items\": items[start:end],\n        \"page\": page,\n        \"page_size\": page_size,\n        \"total\": total,\n        \"total_pages\": total_pages,\n        \"has_next\": page < total_pages,\n    }\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 658,
+      "completion_tokens": 147,
+      "total_tokens": 805,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 20,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 1.812999999994645
+}

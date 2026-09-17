@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "raw_response": {
+    "id": "chatcmpl-EOdjgo5SyNdOztrotF7e4W1MDnDMT",
+    "object": "chat.completion",
+    "created": 1789541324,
+    "model": "gpt-5.6-luna",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\nfrom decimal import Decimal, ROUND_HALF_UP, localcontext\n\n\ndef invoice_total(lines: list[tuple[str, int]]) -> str:\n    cent = Decimal(\"0.01\")\n\n    with localcontext():\n        total = Decimal(\"0.00\")\n        for price, quantity in lines:\n            line_total = (Decimal(price) * quantity).quantize(\n                cent,\n                rounding=ROUND_HALF_UP,\n            )\n            total += line_total\n\n        return format(total, \".2f\")\n```",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 555,
+      "completion_tokens": 430,
+      "total_tokens": 985,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 318,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  },
+  "elapsed_seconds": 7.687000000005355
+}

@@ -1,0 +1,87 @@
+{
+  "gpt-5.6-luna": {
+    "planned": 20,
+    "completed": 20,
+    "n": 20,
+    "solved": 20,
+    "solved_denominator": 20,
+    "all_repeats_solved_cases": 10,
+    "case_denominator": 10,
+    "call_failures": 0,
+    "statuses": {
+      "solved": 20
+    },
+    "speed_n": 0,
+    "mean_tokens_per_second": null,
+    "total_call_elapsed_seconds": 96.906999999861,
+    "call_successes": 20,
+    "call_attempts": 20,
+    "not_run": 0,
+    "successful_response_quality_denominator": 20,
+    "mean_metrics": {
+      "elapsed_seconds": {
+        "mean": 4.84534999999305,
+        "n": 20
+      },
+      "load_duration_seconds": {
+        "mean": null,
+        "n": 0
+      },
+      "tokens_per_second": {
+        "mean": null,
+        "n": 0
+      },
+      "vram_mib": {
+        "mean": null,
+        "n": 0
+      }
+    },
+    "per_case": {
+      "B01": [
+        "solved",
+        "solved"
+      ],
+      "B02": [
+        "solved",
+        "solved"
+      ],
+      "B03": [
+        "solved",
+        "solved"
+      ],
+      "B04": [
+        "solved",
+        "solved"
+      ],
+      "B05": [
+        "solved",
+        "solved"
+      ],
+      "B06": [
+        "solved",
+        "solved"
+      ],
+      "B07": [
+        "solved",
+        "solved"
+      ],
+      "B08": [
+        "solved",
+        "solved"
+      ],
+      "B09": [
+        "solved",
+        "solved"
+      ],
+      "B10": [
+        "solved",
+        "solved"
+      ]
+    },
+    "infra_errors": 0,
+    "missing_responses": 0,
+    "run_status": "completed",
+    "complete": true,
+    "valid_for_comparison": true
+  }
+}
